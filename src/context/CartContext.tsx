@@ -24,6 +24,13 @@ export interface Address {
   isDefault: boolean;
 }
 
+export interface UserProfile {
+  name: string;
+  email: string;
+  phone: string;
+  avatar: string;
+}
+
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (item: Omit<CartItem, "quantity">) => void;
@@ -44,6 +51,14 @@ interface CartContextType {
   addAddress: (address: Omit<Address, "id" | "isDefault"> & { isDefault?: boolean }) => void;
   deleteAddress: (id: string) => void;
   setAddressAsDefault: (id: string) => void;
+  
+  // Auth Integration
+  isLoggedIn: boolean;
+  user: UserProfile | null;
+  login: (phone: string) => void;
+  logout: () => void;
+  isLoginModalOpen: boolean;
+  setLoginModalOpen: (open: boolean) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -87,6 +102,31 @@ const INITIAL_CART: CartItem[] = [
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>(INITIAL_CART);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+
+  // Auth States
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [user, setUser] = useState<UserProfile | null>({
+    name: "Asha Royden",
+    email: "asha.royden@example.com",
+    phone: "+1 234-567-8900",
+    avatar: "/images/profile.png",
+  });
+  const [isLoginModalOpen, setLoginModalOpen] = useState(false);
+
+  const login = (phone: string) => {
+    setIsLoggedIn(true);
+    setUser({
+      name: "Asha Royden",
+      email: "asha.royden@example.com",
+      phone: phone,
+      avatar: "/images/profile.png",
+    });
+  };
+
+  const logout = () => {
+    setIsLoggedIn(false);
+    setUser(null);
+  };
 
   const addToCart = (item: Omit<CartItem, "quantity">) => {
     setCartItems((prev) => {
@@ -245,6 +285,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         addAddress,
         deleteAddress,
         setAddressAsDefault,
+        
+        // Auth context value
+        isLoggedIn,
+        user,
+        login,
+        logout,
+        isLoginModalOpen,
+        setLoginModalOpen,
       }}
     >
       {children}

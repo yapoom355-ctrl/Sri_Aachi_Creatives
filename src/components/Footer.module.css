@@ -1,0 +1,166 @@
+.footer {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .footer {
+    display: block;
+    background-color: var(--card-bg);
+    border-top: 1px solid rgba(0, 0, 0, 0.03);
+    padding: 60px 24px 30px 24px;
+    margin-top: auto;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr;
+    gap: 48px;
+    margin-bottom: 48px;
+  }
+
+  .brandCol {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .logoBadge {
+    background-color: var(--foreground);
+    color: var(--background);
+    font-size: 16px;
+    font-weight: 850;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  }
+
+  .brandTitle {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0 0 10px 0;
+    letter-spacing: -0.2px;
+  }
+
+  .tagline {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+    max-width: 260px;
+  }
+
+  .linkCol {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .colTitle {
+    font-size: 11px;
+    font-weight: 750;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+    margin-bottom: 20px;
+  }
+
+  .linkList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .link {
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .link:hover {
+    color: var(--text-primary);
+  }
+
+  .contactList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .contactLabel {
+    display: block;
+    font-size: 10px;
+    font-weight: 750;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+
+  .contactValue {
+    display: block;
+    font-size: 13px;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  a.contactValue {
+    transition: color 0.15s ease;
+  }
+
+  a.contactValue:hover {
+    text-decoration: underline;
+    opacity: 0.85;
+  }
+
+  .bottomRow {
+    max-width: 1200px;
+    margin: 0 auto;
+    border-top: 1px solid rgba(0, 0, 0, 0.04);
+    padding-top: 24px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .copyright {
+    font-size: 12px;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    text-align: center;
+  }
+}
+
+/* Dark mode configurations */
+@media (prefers-color-scheme: dark) {
+  @media (min-width: 768px) {
+    .footer {
+      background-color: #121214;
+      border-top-color: rgba(255, 255, 255, 0.03);
+    }
+    .logoBadge {
+      background-color: #ffffff;
+      color: #000000;
+    }
+    .bottomRow {
+      border-top-color: rgba(255, 255, 255, 0.04);
+    }
+  }
+}

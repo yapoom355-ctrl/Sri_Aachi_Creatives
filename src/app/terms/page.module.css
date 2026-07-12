@@ -1,0 +1,122 @@
+.mainContent {
+  display: flex;
+  flex-direction: column;
+  padding: 0 24px 110px 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 0 16px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.02);
+  margin-bottom: 24px;
+}
+
+.backButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.backButton:hover {
+  background-color: rgba(28, 27, 31, 0.05);
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.3px;
+  text-align: center;
+}
+
+.placeholder {
+  width: 40px;
+}
+
+.policyHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.iconCircle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+  border: 1px solid rgba(28, 27, 31, 0.03);
+}
+
+.lastUpdated {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin: 0;
+}
+
+.documentBody {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 750;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.sectionText {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+  font-weight: 500;
+}
+
+@media (min-width: 768px) {
+  .mainContent {
+    padding: 0 40px 110px 40px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .backButton {
+    background-color: #1e1e22;
+  }
+  .backButton:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  .iconCircle {
+    background-color: #1e1e22;
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+}

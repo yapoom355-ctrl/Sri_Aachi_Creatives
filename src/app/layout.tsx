@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { CartProvider } from "@/context/CartContext";
 import CartSidebar from "@/components/CartSidebar";
+import LoginModal from "@/components/LoginModal";
+import Footer from "@/components/Footer";
 import "./globals.css";
 
 const fellix = localFont({
@@ -66,6 +68,8 @@ export default function RootLayout({
         <CartProvider>
           {children}
           <CartSidebar />
+          <LoginModal />
+          <Footer />
         </CartProvider>
       </body>
     </html>

@@ -9,7 +9,7 @@ import styles from "./Header.module.css";
 
 export default function Header() {
   const router = useRouter();
-  const { cartCount, setSidebarOpen } = useCart();
+  const { cartCount, setSidebarOpen, isLoggedIn, user, setLoginModalOpen } = useCart();
 
   const handleCartClick = () => {
     if (window.innerWidth < 768) {
@@ -19,15 +19,28 @@ export default function Header() {
     }
   };
 
+  const handleProfileClick = () => {
+    if (isLoggedIn) {
+      router.push("/profile");
+    } else {
+      setLoginModalOpen(true);
+    }
+  };
+
   return (
     <header className={styles.header}>
-      <div className={styles.profileContainer}>
+      <div 
+        className={styles.profileContainer} 
+        onClick={handleProfileClick}
+        style={{ cursor: "pointer" }}
+      >
         <Image
-          src="/images/profile.png"
+          src={isLoggedIn && user ? user.avatar : "/images/profile.png"}
           alt="Profile Avatar"
           width={44}
           height={44}
           className={styles.profilePic}
+          style={{ opacity: isLoggedIn ? 1 : 0.65 }}
           priority
         />
       </div>

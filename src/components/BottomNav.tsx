@@ -9,7 +9,7 @@ import styles from "./BottomNav.module.css";
 // CONFIGURATION TOGGLE:
 // - Set to 'true' to use ONLY bottom navigation on all screen sizes.
 // - Set to 'false' to use bottom navigation on mobile and top navigation on web/tablet.
-export const FORCE_BOTTOM_NAV = false;
+export const FORCE_BOTTOM_NAV = true;
 
 export default function BottomNav() {
   const router = useRouter();

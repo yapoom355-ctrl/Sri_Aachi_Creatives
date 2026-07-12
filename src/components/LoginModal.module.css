@@ -1,0 +1,346 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(28, 27, 31, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 16px;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.modalCard {
+  background-color: var(--background);
+  border-radius: 24px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(28, 27, 31, 0.05);
+  width: 100%;
+  max-width: 420px;
+  padding: 32px 24px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.closeBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+  background-color: rgba(28, 27, 31, 0.05);
+  transform: rotate(90deg);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.logoBadge {
+  background-color: var(--foreground);
+  color: var(--background);
+  font-size: 20px;
+  font-weight: 850;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 6px 0;
+  letter-spacing: -0.4px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+  max-width: 280px;
+}
+
+.errorBanner {
+  background-color: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 10px 14px;
+  width: 100%;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.inputContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.countryCode {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  background-color: var(--input-bg);
+  border: 1px solid rgba(28, 27, 31, 0.05);
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inputWrapper {
+  position: relative;
+  flex: 1;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.inputField {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px 0 42px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background-color: var(--input-bg);
+  border: 1px solid rgba(28, 27, 31, 0.05);
+  border-radius: 14px;
+  box-sizing: border-box;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.inputField:focus {
+  border-color: var(--text-primary);
+}
+
+.submitBtn {
+  background-color: var(--foreground);
+  color: var(--background);
+  font-size: 13px;
+  font-weight: 750;
+  height: 48px;
+  border-radius: 24px;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  width: 100%;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.submitBtn:hover {
+  opacity: 0.9;
+}
+
+.submitBtn:active {
+  transform: scale(0.98);
+}
+
+.testHint {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 4px 0 0 0;
+  opacity: 0.85;
+}
+
+.otpGrid {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  margin: 8px 0;
+}
+
+.otpInput {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background-color: var(--input-bg);
+  border: 1px solid rgba(28, 27, 31, 0.05);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-align: center;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.otpInput:focus {
+  border-color: var(--text-primary);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.timerRow {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.timerText {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.resendBtn {
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  margin-top: 4px;
+}
+
+.backBtn:hover {
+  color: var(--text-primary);
+}
+
+.policyLinks {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.5;
+  margin-top: 24px;
+  max-width: 320px;
+  opacity: 0.85;
+}
+
+.policyLink {
+  color: var(--text-primary);
+  text-decoration: underline;
+  font-weight: 650;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Mobile responsive bottom sheet rules */
+@media (max-width: 767px) {
+  .overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modalCard {
+    border-radius: 24px 24px 0 0;
+    max-width: 100%;
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    padding-bottom: calc(32px + env(safe-area-inset-bottom));
+  }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* Dark mode configurations */
+@media (prefers-color-scheme: dark) {
+  .modalCard {
+    background-color: #121214;
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+  .closeBtn {
+    background-color: #1e1e22;
+  }
+  .closeBtn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  .countryCode {
+    background-color: #1e1e22;
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+  .inputField {
+    background-color: #1e1e22;
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+  .otpInput {
+    background-color: #1e1e22;
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+  .submitBtn {
+    background-color: #ffffff;
+    color: #000000;
+  }
+}

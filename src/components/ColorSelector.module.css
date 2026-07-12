@@ -1,0 +1,35 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.colorSwatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.colorSwatch:hover {
+  transform: scale(1.1);
+}
+
+.colorSwatch:active {
+  transform: scale(0.9);
+}
+
+.active {
+  transform: scale(1.15);
+  box-shadow: 
+    0 0 0 2px var(--background),
+    0 0 0 4px var(--foreground);
+}
+
+@media (prefers-color-scheme: dark) {
+  .colorSwatch {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}

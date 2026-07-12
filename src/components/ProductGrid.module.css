@@ -1,0 +1,30 @@
+.gridContainer {
+  padding: 0 24px 110px 24px;
+  background-color: var(--background);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .gridContainer {
+    padding: 0 32px 120px 32px;
+  }
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .gridContainer {
+    padding: 0 32px 130px 32px;
+  }
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+}

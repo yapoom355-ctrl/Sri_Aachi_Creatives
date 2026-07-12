@@ -1,0 +1,237 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--card-bg);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
+  height: 100%;
+}
+
+.cardLink {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  width: 100%;
+  height: 100%;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1.05;
+  background-color: var(--input-bg);
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.productImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.card:hover .productImage {
+  transform: scale(1.03);
+}
+
+.likeButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  z-index: 5;
+}
+
+.likeButton:hover {
+  transform: scale(1.1);
+}
+
+.likeButton:active {
+  transform: scale(0.9);
+}
+
+.heartIcon {
+  color: var(--text-secondary);
+  transition: transform 0.2s ease, fill 0.2s ease;
+}
+
+.liked .heartIcon {
+  color: var(--like-active);
+  transform: scale(1.1);
+}
+
+.details {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 12px 14px 14px 14px;
+  flex: 1;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+  padding-right: 38px;
+}
+
+.cartActionWrapper {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  z-index: 10;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subtitle {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.price {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 1px;
+}
+
+.cartWrapper {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--input-bg);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.expanded {
+  width: 86px;
+  border-radius: 20px;
+  background-color: var(--foreground);
+}
+
+.cartButton {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  background: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.cartButton:hover {
+  transform: scale(1.08);
+}
+
+.cartButton:active {
+  transform: scale(0.92);
+}
+
+.cartIcon {
+  color: var(--text-primary);
+}
+
+.quantitySelector {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.qtyButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.qtyButton:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.qtyButton:active {
+  transform: scale(0.85);
+}
+
+.quantityText {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  min-width: 12px;
+  text-align: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .likeButton {
+    background-color: #1c1c24;
+    border-color: rgba(255, 255, 255, 0.03);
+  }
+  .expanded {
+    background-color: var(--foreground);
+  }
+  .quantityText {
+    color: var(--background);
+  }
+  .qtyButton {
+    background: rgba(0, 0, 0, 0.12);
+    color: var(--text-primary);
+  }
+  .qtyButton:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+}

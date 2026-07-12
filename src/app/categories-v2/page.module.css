@@ -1,0 +1,190 @@
+.mainContent {
+  display: flex;
+  flex-direction: column;
+  padding: 0 24px 110px 24px;
+}
+
+.masonryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: minmax(110px, auto);
+  gap: 16px;
+}
+
+.heroCard {
+  grid-column: span 2;
+  grid-row: span 1;
+  min-height: 150px;
+}
+
+.tallCard {
+  grid-row: span 2;
+  min-height: 240px;
+}
+
+.squareCard1 {
+  grid-row: span 1;
+  min-height: 112px;
+}
+
+.tallCard2 {
+  grid-row: span 2;
+  min-height: 240px;
+}
+
+.squareCard2 {
+  grid-row: span 1;
+  min-height: 112px;
+}
+
+.card {
+  position: relative;
+  border-radius: 28px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px;
+  color: #ffffff;
+  text-align: left;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.card:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.imageWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.bgImage {
+  object-fit: cover;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover .bgImage {
+  transform: scale(1.06);
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.45) 100%);
+  z-index: 2;
+}
+
+.cardHeader {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.itemCount {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  letter-spacing: 0.2px;
+}
+
+.arrowIconWrapper {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.25s ease;
+}
+
+.card:hover .arrowIconWrapper {
+  transform: rotate(45deg);
+}
+
+.arrowIcon {
+  color: #ffffff;
+}
+
+.cardFooter {
+  position: relative;
+  z-index: 3;
+  margin-top: auto;
+}
+
+.collectionName {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+}
+
+@media (min-width: 768px) {
+  .mainContent {
+    padding: 0 32px 120px 32px;
+  }
+  
+  .masonryGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  
+  .heroCard {
+    grid-column: span 3;
+    min-height: 200px;
+  }
+  
+  .tallCard {
+    min-height: 300px;
+  }
+  
+  .tallCard2 {
+    min-height: 300px;
+  }
+  
+  .squareCard1 {
+    min-height: 140px;
+  }
+  
+  .squareCard2 {
+    min-height: 140px;
+  }
+  
+  .collectionName {
+    font-size: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mainContent {
+    padding: 0 32px 130px 32px;
+  }
+  
+  .masonryGrid {
+    gap: 24px;
+  }
+}

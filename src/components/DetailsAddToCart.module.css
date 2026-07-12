@@ -1,0 +1,92 @@
+.container {
+  position: relative;
+  width: 100%;
+  height: 52px;
+  border-radius: 26px;
+  background-color: var(--foreground);
+  overflow: hidden;
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
+  border: 1px solid var(--foreground);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.active {
+  background-color: var(--foreground);
+}
+
+.addButton {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: none;
+  border: none;
+  color: var(--background);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.addButton:hover {
+  opacity: 0.95;
+}
+
+.addButton:active {
+  transform: scale(0.98);
+}
+
+.quantityControls {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 12px;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.qtyButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: var(--background);
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.qtyButton:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+.qtyButton:active {
+  transform: scale(0.88);
+}
+
+.quantityText {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--background);
+  user-select: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .qtyButton {
+    background-color: rgba(0, 0, 0, 0.15);
+    color: var(--text-primary);
+  }
+  .qtyButton:hover {
+    background-color: rgba(0, 0, 0, 0.25);
+  }
+}

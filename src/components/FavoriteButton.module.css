@@ -1,0 +1,41 @@
+.button {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  z-index: 10;
+}
+
+.button:hover {
+  transform: scale(1.08);
+}
+
+.button:active {
+  transform: scale(0.92);
+}
+
+.icon {
+  color: var(--text-secondary);
+  transition: transform 0.2s ease, fill 0.2s ease;
+}
+
+.liked .icon {
+  color: var(--like-active);
+  transform: scale(1.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  .button {
+    background-color: #1c1c24;
+    border-color: rgba(255, 255, 255, 0.03);
+  }
+}

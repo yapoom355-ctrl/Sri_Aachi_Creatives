@@ -1,0 +1,62 @@
+"use client";
+
+import React, { useState } from "react";
+import { Plus, Minus } from "lucide-react";
+import styles from "./DetailsAddToCart.module.css";
+
+export default function DetailsAddToCart() {
+  const [quantity, setQuantity] = useState(0);
+
+  const handleIncrement = () => {
+    setQuantity(quantity + 1);
+  };
+
+  const handleDecrement = () => {
+    if (quantity > 0) {
+      setQuantity(quantity - 1);
+    }
+  };
+
+  return (
+    <div className={`${styles.container} ${quantity > 0 ? styles.active : ""}`}>
+      {/* Main Add Button (Qty is 0) */}
+      <button
+        className={styles.addButton}
+        onClick={handleIncrement}
+        style={{
+          opacity: quantity === 0 ? 1 : 0,
+          pointerEvents: quantity === 0 ? "auto" : "none",
+          transform: quantity === 0 ? "scale(1)" : "scale(0.95)",
+        }}
+      >
+        Add to Cart
+      </button>
+
+      {/* Adjust quantity (Qty > 0) */}
+      <div
+        className={styles.quantityControls}
+        style={{
+          opacity: quantity > 0 ? 1 : 0,
+          pointerEvents: quantity > 0 ? "auto" : "none",
+          transform: quantity > 0 ? "scale(1)" : "scale(1.05)",
+        }}
+      >
+        <button
+          className={styles.qtyButton}
+          onClick={handleDecrement}
+          aria-label="Decrease quantity"
+        >
+          <Minus size={16} strokeWidth={2.5} />
+        </button>
+        <span className={styles.quantityText}>{quantity}</span>
+        <button
+          className={styles.qtyButton}
+          onClick={handleIncrement}
+          aria-label="Increase quantity"
+        >
+          <Plus size={16} strokeWidth={2.5} />
+        </button>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,96 @@
+.sliderContainer {
+  width: 100%;
+  padding: 8px 0 16px 0;
+  background-color: var(--background);
+}
+
+.slider {
+  display: flex;
+  overflow-x: auto;
+  gap: 12px;
+  padding: 0 24px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 768px) {
+  .slider {
+    padding: 0 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .slider {
+    padding: 0;
+  }
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 15px 5px 5px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.emojiCircle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  font-size: 15px;
+  transition: transform 0.25s ease;
+}
+
+.activePill {
+  background-color: var(--foreground);
+  color: var(--background);
+  border: 1px solid var(--foreground);
+}
+
+.activePill .emojiCircle {
+  background-color: #ffffff;
+  transform: scale(1.05);
+}
+
+.inactivePill {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.inactivePill .emojiCircle {
+  background-color: var(--input-bg);
+}
+
+.pill:hover {
+  transform: translateY(-1px);
+}
+
+.pill:active {
+  transform: translateY(0);
+}
+
+@media (prefers-color-scheme: dark) {
+  .activePill {
+    background-color: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
+  }
+  
+  .activePill .emojiCircle {
+    background-color: #f0f0f5;
+  }
+  
+  .inactivePill {
+    border-color: rgba(255, 255, 255, 0.03);
+  }
+}

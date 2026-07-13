@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { useQuery } from "@apollo/client/react";
 import { useSearchParams } from "next/navigation";
 import MobileContainer from "@/components/MobileContainer";
@@ -12,7 +12,7 @@ import { Search } from "lucide-react";
 import styles from "./page.module.css";
 import { Product } from "@/types";
 
-export default function ExploreProductsPage() {
+function ExploreProductsContent() {
   const searchParams = useSearchParams();
   const categoryId = searchParams.get("category");
   const urlSearch = searchParams.get("search") || "";
@@ -110,5 +110,13 @@ export default function ExploreProductsPage() {
 
       <BottomNav />
     </MobileContainer>
+  );
+}
+
+export default function ExploreProductsPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: "2rem", textAlign: "center" }}>Loading...</div>}>
+      <ExploreProductsContent />
+    </Suspense>
   );
 }

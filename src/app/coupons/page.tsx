@@ -2,13 +2,16 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@apollo/client/react";
 import MobileContainer from "@/components/MobileContainer";
 import BottomNav from "@/components/BottomNav";
 import { useCart } from "@/context/CartContext";
 import { ChevronLeft, Info, Check, Trash2 } from "lucide-react";
+import { GET_COUPONS } from "@/graphql/queries";
 import styles from "./page.module.css";
 
 interface Coupon {
+  id: string;
   code: string;
   value: string;
   title: string;
@@ -16,35 +19,24 @@ interface Coupon {
   expiry: string;
 }
 
-const COUPONS_DATA: Coupon[] = [
-  {
-    code: "SAVE10",
-    value: "10%",
-    title: "Sitewide Discount",
-    description: "Get 10% off your entire order. Valid on all hoodies and active sneakers.",
-    expiry: "Expires July 20, 2026",
-  },
-  {
-    code: "FREESHIP",
-    value: "FREE",
-    title: "Free Standard Shipping",
-    description: "Free standard home delivery on orders exceeding total purchase values of $100.",
-    expiry: "Expires August 01, 2026",
-  },
-  {
-    code: "WELCOME5",
-    value: "$5",
-    title: "Welcome Coupon",
-    description: "Special sign-up gift of $5.00 off for first-time orders across Gubera collections.",
-    expiry: "No Expiration Date",
-  },
-];
-
 export default function CouponsPage() {
   const router = useRouter();
   const { appliedCoupon, applyCoupon, removeCoupon } = useCart();
   const [manualCode, setManualCode] = useState("");
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const { data, loading, error } = useQuery(GET_COUPONS, {
+    fetchPolicy: "cache-and-network",
+  }) as any;
+
+  const couponsData: Coupon[] = (data?.coupons || []).map((c: any) => ({
+    id: c.id,
+    code: c.code,
+    value: c.discountType === "PERCENTAGE" ? `${c.discountValue}%` : `₹${c.discountValue}`,
+    title: c.description || "Special Discount",
+    description: c.description || "Use this coupon to get a discount on your order.",
+    expiry: c.endDate ? `Expires ${new Date(c.endDate).toLocaleDateString()}` : "No Expiration Date",
+  }));
 
   const handleCopy = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -54,14 +46,24 @@ export default function CouponsPage() {
     }, 2000);
   };
 
-  const handleManualApply = (e: React.FormEvent) => {
+  const handleManualApply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualCode.trim()) return;
-    if (applyCoupon(manualCode)) {
+    const success = await applyCoupon(manualCode);
+    if (success) {
       alert(`Success! Coupon ${manualCode.toUpperCase()} applied.`);
       setManualCode("");
     } else {
-      alert("Invalid code! Try 'SAVE10', 'WELCOME5', or 'FREESHIP'");
+      alert(`Invalid code!`);
+    }
+  };
+
+  const handleApplyCoupon = async (code: string) => {
+    const success = await applyCoupon(code);
+    if (success) {
+      alert(`Success! Coupon ${code} applied.`);
+    } else {
+      alert(`Failed to apply coupon ${code}.`);
     }
   };
 
@@ -123,61 +125,71 @@ export default function CouponsPage() {
         </div>
 
         {/* Coupons Ticket Cards List */}
-        <div className={styles.couponsList}>
-          {COUPONS_DATA.map((coupon) => {
-            const isApplied = appliedCoupon === coupon.code;
-            return (
-              <div key={coupon.code} className={`${styles.ticketCard} ${isApplied ? styles.ticketCardActive : ""}`}>
-                {/* Ticket Punchouts circles */}
-                <div className={styles.punchoutLeft} />
-                <div className={styles.punchoutRight} />
+        {loading ? (
+          <div style={{ padding: "2rem", textAlign: "center" }}>Loading coupons...</div>
+        ) : error ? (
+          <div style={{ padding: "2rem", textAlign: "center", color: "red" }}>Failed to load coupons.</div>
+        ) : couponsData.length > 0 ? (
+          <div className={styles.couponsList}>
+            {couponsData.map((coupon) => {
+              const isApplied = appliedCoupon === coupon.code;
+              return (
+                <div key={coupon.id} className={`${styles.ticketCard} ${isApplied ? styles.ticketCardActive : ""}`}>
+                  {/* Ticket Punchouts circles */}
+                  <div className={styles.punchoutLeft} />
+                  <div className={styles.punchoutRight} />
 
-                {/* Left Side (Value Indicator) */}
-                <div className={`${styles.valueSection} ${isApplied ? styles.valueSectionActive : ""}`}>
-                  <span className={styles.valueText}>{coupon.value}</span>
-                  <span className={styles.valueSub}>OFF</span>
-                </div>
-
-                {/* Dashed Separator */}
-                <div className={styles.divider} />
-
-                {/* Right Side (Promo Info and Actions) */}
-                <div className={styles.infoSection}>
-                  <div className={styles.meta}>
-                    <h3 className={styles.couponTitle}>{coupon.title}</h3>
-                    <p className={styles.description}>{coupon.description}</p>
-                    <span className={styles.expiry}>{coupon.expiry}</span>
+                  {/* Left Side (Value Indicator) */}
+                  <div className={`${styles.valueSection} ${isApplied ? styles.valueSectionActive : ""}`}>
+                    <span className={styles.valueText}>{coupon.value}</span>
+                    <span className={styles.valueSub}>OFF</span>
                   </div>
-                  
-                  <div className={styles.codeRow}>
-                    <div className={styles.codeBox}>
-                      <span className={styles.codeText}>{coupon.code}</span>
+
+                  {/* Dashed Separator */}
+                  <div className={styles.divider} />
+
+                  {/* Right Side (Promo Info and Actions) */}
+                  <div className={styles.infoSection}>
+                    <div className={styles.meta}>
+                      <h3 className={styles.couponTitle}>{coupon.title}</h3>
+                      <p className={styles.description}>{coupon.description}</p>
+                      <span className={styles.expiry}>{coupon.expiry}</span>
                     </div>
+                    
+                    <div className={styles.codeRow}>
+                      <div className={styles.codeBox}>
+                        <span className={styles.codeText}>{coupon.code}</span>
+                      </div>
 
-                    <div className={styles.actionsGroup}>
-                      <button
-                        onClick={() => handleCopy(coupon.code)}
-                        className={`${styles.copyBtn} ${copiedCode === coupon.code ? styles.copiedActive : ""}`}
-                        type="button"
-                      >
-                        {copiedCode === coupon.code ? "Copied!" : "Copy"}
-                      </button>
+                      <div className={styles.actionsGroup}>
+                        <button
+                          onClick={() => handleCopy(coupon.code)}
+                          className={`${styles.copyBtn} ${copiedCode === coupon.code ? styles.copiedActive : ""}`}
+                          type="button"
+                        >
+                          {copiedCode === coupon.code ? "Copied!" : "Copy"}
+                        </button>
 
-                      <button
-                        onClick={() => isApplied ? removeCoupon() : applyCoupon(coupon.code)}
-                        className={`${styles.applyBtn} ${isApplied ? styles.applyBtnActive : styles.applyBtnInactive}`}
-                        type="button"
-                      >
-                        {isApplied ? "Applied" : "Apply"}
-                      </button>
+                        <button
+                          onClick={() => isApplied ? removeCoupon() : handleApplyCoupon(coupon.code)}
+                          className={`${styles.applyBtn} ${isApplied ? styles.applyBtnActive : styles.applyBtnInactive}`}
+                          type="button"
+                        >
+                          {isApplied ? "Applied" : "Apply"}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-              </div>
-            );
-          })}
-        </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{ padding: "2rem", textAlign: "center", opacity: 0.5 }}>
+            No active coupons found.
+          </div>
+        )}
       </main>
 
       <BottomNav />

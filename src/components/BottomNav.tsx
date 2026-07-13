@@ -9,12 +9,12 @@ import styles from "./BottomNav.module.css";
 // CONFIGURATION TOGGLE:
 // - Set to 'true' to use ONLY bottom navigation on all screen sizes.
 // - Set to 'false' to use bottom navigation on mobile and top navigation on web/tablet.
-export const FORCE_BOTTOM_NAV = true;
+export const FORCE_BOTTOM_NAV = false;
 
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
-  const { setSidebarOpen } = useCart();
+  const { setSidebarOpen, setWishlistSidebarOpen } = useCart();
 
   useEffect(() => {
     if (FORCE_BOTTOM_NAV) {
@@ -37,7 +37,12 @@ export default function BottomNav() {
     ) {
       return "profile";
     }
-    return "favorites";
+    if (
+      pathname?.startsWith("/wishlist")
+    ) {
+      return "favorites";
+    }
+    return "home";
   };
 
   const activeTab = getActiveTab();
@@ -102,11 +107,17 @@ export default function BottomNav() {
         {/* Favorites Tab */}
         <button
           className={`${styles.navItem} ${activeTab === "favorites" ? styles.activeItem : styles.inactiveItem}`}
-          onClick={() => router.push("/products-v2")}
-          aria-label="Explore"
+          onClick={() => {
+            if (window.innerWidth < 768) {
+              router.push("/wishlist");
+            } else {
+              setWishlistSidebarOpen(true);
+            }
+          }}
+          aria-label="Wishlist"
         >
           <Heart size={18} strokeWidth={2.5} />
-          <span className={styles.navText}>Explore</span>
+          <span className={styles.navText}>Wishlist</span>
         </button>
 
         {/* Profile Tab */}

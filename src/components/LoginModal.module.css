@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(28, 27, 31, 0.4);
+  background-color: rgba(30, 26, 23, 0.45);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
@@ -16,15 +16,13 @@
 }
 
 .modalCard {
-  background-color: var(--background);
+  background-color: var(--card-bg);
   border-radius: 24px;
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.1),
-    0 1px 3px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(28, 27, 31, 0.05);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-subtle);
   width: 100%;
   max-width: 420px;
-  padding: 32px 24px;
+  padding: 36px 28px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -40,8 +38,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: none;
-  background-color: var(--card-bg);
+  border: 1px solid var(--border-subtle);
+  background-color: var(--input-bg);
   color: var(--text-primary);
   display: flex;
   justify-content: center;
@@ -51,7 +49,8 @@
 }
 
 .closeBtn:hover {
-  background-color: rgba(28, 27, 31, 0.05);
+  border-color: var(--accent);
+  color: var(--accent);
   transform: rotate(90deg);
 }
 
@@ -65,33 +64,37 @@
 }
 
 .logoBadge {
-  background-color: var(--foreground);
-  color: var(--background);
-  font-size: 20px;
-  font-weight: 850;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 14px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.modalLogo {
+  object-fit: contain;
+  height: 80px;
+  width: auto;
+  display: block;
 }
 
 .title {
-  font-size: 20px;
-  font-weight: 800;
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 500;
   color: var(--text-primary);
   margin: 0 0 6px 0;
-  letter-spacing: -0.4px;
+  letter-spacing: 0.01em;
 }
 
 .subtitle {
+  font-family: var(--font-body);
   font-size: 13px;
   color: var(--text-secondary);
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.5;
   max-width: 280px;
 }
 
@@ -155,11 +158,12 @@
   width: 100%;
   height: 48px;
   padding: 0 16px 0 42px;
+  font-family: var(--font-body);
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
   background-color: var(--input-bg);
-  border: 1px solid rgba(28, 27, 31, 0.05);
+  border: 1.5px solid var(--border-subtle);
   border-radius: 14px;
   box-sizing: border-box;
   outline: none;
@@ -167,16 +171,18 @@
 }
 
 .inputField:focus {
-  border-color: var(--text-primary);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(164, 116, 73, 0.1);
 }
 
 .submitBtn {
-  background-color: var(--foreground);
-  color: var(--background);
+  background: var(--accent-gradient);
+  color: #ffffff;
+  font-family: var(--font-body);
   font-size: 13px;
-  font-weight: 750;
-  height: 48px;
-  border-radius: 24px;
+  font-weight: 700;
+  height: 50px;
+  border-radius: 25px;
   border: none;
   display: flex;
   justify-content: center;
@@ -184,12 +190,14 @@
   gap: 8px;
   cursor: pointer;
   width: 100%;
-  transition: transform 0.2s ease, opacity 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  letter-spacing: 0.2px;
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 16px rgba(164, 116, 73, 0.35);
 }
 
 .submitBtn:hover {
-  opacity: 0.9;
+  opacity: 0.92;
+  box-shadow: 0 6px 22px rgba(164, 116, 73, 0.45);
 }
 
 .submitBtn:active {
@@ -313,34 +321,4 @@
 @keyframes slideUp {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
-}
-
-/* Dark mode configurations */
-@media (prefers-color-scheme: dark) {
-  .modalCard {
-    background-color: #121214;
-    border-color: rgba(255, 255, 255, 0.05);
-  }
-  .closeBtn {
-    background-color: #1e1e22;
-  }
-  .closeBtn:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-  }
-  .countryCode {
-    background-color: #1e1e22;
-    border-color: rgba(255, 255, 255, 0.05);
-  }
-  .inputField {
-    background-color: #1e1e22;
-    border-color: rgba(255, 255, 255, 0.05);
-  }
-  .otpInput {
-    background-color: #1e1e22;
-    border-color: rgba(255, 255, 255, 0.05);
-  }
-  .submitBtn {
-    background-color: #ffffff;
-    color: #000000;
-  }
 }

@@ -3,11 +3,11 @@
   display: flex;
   flex-direction: column;
   background-color: var(--card-bg);
-  border-radius: 24px;
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(0, 0, 0, 0.02);
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
   height: 100%;
 }
 
@@ -21,8 +21,8 @@
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
 }
 
 .imageWrapper {
@@ -40,32 +40,34 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card:hover .productImage {
-  transform: scale(1.03);
+  transform: scale(1.05);
 }
 
+/* Like button */
 .likeButton {
   position: absolute;
   top: 12px;
   right: 12px;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background-color: #ffffff;
+  background-color: rgba(254, 252, 248, 0.92);
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 0, 0, 0.02);
+  box-shadow: 0 2px 10px rgba(30, 26, 23, 0.1);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(4px);
   transition: transform 0.2s ease, background-color 0.2s ease;
   z-index: 5;
 }
 
 .likeButton:hover {
-  transform: scale(1.1);
+  transform: scale(1.12);
 }
 
 .likeButton:active {
@@ -82,11 +84,12 @@
   transform: scale(1.1);
 }
 
+/* Card details */
 .details {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  padding: 12px 14px 14px 14px;
+  padding: 14px 16px 16px 16px;
   flex: 1;
 }
 
@@ -96,7 +99,7 @@
   gap: 3px;
   flex: 1;
   min-width: 0;
-  padding-right: 38px;
+  padding-right: 40px;
 }
 
 .cartActionWrapper {
@@ -107,15 +110,18 @@
 }
 
 .title {
-  font-size: 13px;
-  font-weight: 600;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 500;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: 0.01em;
 }
 
 .subtitle {
+  font-family: var(--font-body);
   font-size: 11px;
   font-weight: 500;
   color: var(--text-secondary);
@@ -125,36 +131,40 @@
 }
 
 .price {
+  font-family: var(--font-body);
   font-size: 14px;
   font-weight: 700;
-  color: var(--text-primary);
-  margin-top: 1px;
+  color: var(--accent);
+  margin-top: 2px;
 }
 
+/* Cart action */
 .cartWrapper {
   position: relative;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background-color: var(--input-bg);
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease;
+  border: 1px solid var(--border-subtle);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease, border-color 0.25s ease;
   overflow: hidden;
   flex-shrink: 0;
   margin-left: 8px;
 }
 
 .expanded {
-  width: 86px;
-  border-radius: 20px;
-  background-color: var(--foreground);
+  width: 90px;
+  border-radius: 22px;
+  background: var(--accent-gradient);
+  border-color: transparent;
 }
 
 .cartButton {
   position: absolute;
   top: 0;
   left: 0;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -184,7 +194,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 4px;
+  padding: 0 5px;
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
@@ -195,13 +205,13 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.2);
   color: #ffffff;
   transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .qtyButton:hover {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.35);
 }
 
 .qtyButton:active {
@@ -209,29 +219,10 @@
 }
 
 .quantityText {
+  font-family: var(--font-body);
   font-size: 13px;
   font-weight: 700;
   color: #ffffff;
   min-width: 12px;
   text-align: center;
-}
-
-@media (prefers-color-scheme: dark) {
-  .likeButton {
-    background-color: #1c1c24;
-    border-color: rgba(255, 255, 255, 0.03);
-  }
-  .expanded {
-    background-color: var(--foreground);
-  }
-  .quantityText {
-    color: var(--background);
-  }
-  .qtyButton {
-    background: rgba(0, 0, 0, 0.12);
-    color: var(--text-primary);
-  }
-  .qtyButton:hover {
-    background-color: rgba(0, 0, 0, 0.2);
-  }
 }

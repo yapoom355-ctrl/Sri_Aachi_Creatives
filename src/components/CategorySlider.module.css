@@ -1,13 +1,13 @@
 .sliderContainer {
   width: 100%;
-  padding: 8px 0 16px 0;
+  padding: 8px 0 18px 0;
   background-color: var(--background);
 }
 
 .slider {
   display: flex;
   overflow-x: auto;
-  gap: 12px;
+  gap: 10px;
   padding: 0 24px;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
@@ -29,13 +29,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 15px 5px 5px;
+  padding: 6px 16px 6px 6px;
   border-radius: 30px;
   font-size: 13px;
+  font-family: var(--font-body);
   font-weight: 600;
   white-space: nowrap;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--shadow-sm);
 }
 
 .emojiCircle {
@@ -45,26 +46,27 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background-color: #ffffff;
   font-size: 15px;
   transition: transform 0.25s ease;
 }
 
+/* Active pill: rich bronze fill */
 .activePill {
-  background-color: var(--foreground);
-  color: var(--background);
-  border: 1px solid var(--foreground);
+  background: var(--accent-gradient);
+  color: #ffffff;
+  border: 1px solid transparent;
 }
 
 .activePill .emojiCircle {
-  background-color: #ffffff;
-  transform: scale(1.05);
+  background-color: rgba(255, 255, 255, 0.22);
+  transform: scale(1.06);
 }
 
+/* Inactive pill */
 .inactivePill {
   background-color: var(--card-bg);
   color: var(--text-primary);
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border-subtle);
 }
 
 .inactivePill .emojiCircle {
@@ -72,25 +74,18 @@
 }
 
 .pill:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+}
+
+.inactivePill:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .pill:active {
   transform: translateY(0);
 }
 
-@media (prefers-color-scheme: dark) {
-  .activePill {
-    background-color: #ffffff;
-    color: #000000;
-    border-color: #ffffff;
-  }
-  
-  .activePill .emojiCircle {
-    background-color: #f0f0f5;
-  }
-  
-  .inactivePill {
-    border-color: rgba(255, 255, 255, 0.03);
-  }
+.name {
+  letter-spacing: -0.1px;
 }

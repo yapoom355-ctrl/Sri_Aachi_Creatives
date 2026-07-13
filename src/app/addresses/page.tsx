@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import MobileContainer from "@/components/MobileContainer";
 import BottomNav from "@/components/BottomNav";
 import { useCart } from "@/context/CartContext";
-import { ChevronLeft, Plus, MapPin, Trash2 } from "lucide-react";
+import { ChevronLeft, Plus, MapPin, Trash2, ShieldAlert } from "lucide-react";
 import styles from "./page.module.css";
 
 export default function ShippingAddressesPage() {
@@ -15,40 +15,88 @@ export default function ShippingAddressesPage() {
     addAddress,
     deleteAddress,
     setAddressAsDefault,
+    isLoggedIn,
+    setLoginModalOpen,
   } = useCart();
   
   const [showAddForm, setShowAddForm] = useState(false);
-  const [name, setName] = useState("");
-  const [street, setStreet] = useState("");
-  const [cityState, setCityState] = useState("");
-  const [country, setCountry] = useState("UK");
-  const [phone, setPhone] = useState("");
-  const [isDefaultForm, setIsDefaultForm] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [addressLine1, setAddressLine1] = useState("");
+  const [addressLine2, setAddressLine2] = useState("");
+  const [landmark, setLandmark] = useState("");
+  const [district, setDistrict] = useState("");
+  const [state, setState] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [isPrimary, setIsPrimary] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleAddAddress = (e: React.FormEvent) => {
+  const handleAddAddress = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !street.trim() || !cityState.trim() || !phone.trim()) {
-      alert("Please fill in all address parameters.");
+    if (!customerName.trim() || !addressLine1.trim() || !district.trim() || !state.trim() || !pincode.trim() || !phoneNumber.trim()) {
+      alert("Please fill in all required fields.");
       return;
     }
 
-    addAddress({
-      name,
-      street,
-      cityState,
-      country,
-      phone,
-      isDefault: isDefaultForm,
-    });
+    setIsSaving(true);
+    try {
+      await addAddress({
+        customerName: customerName.trim(),
+        addressLine1: addressLine1.trim(),
+        addressLine2: addressLine2.trim() || null,
+        landmark: landmark.trim() || null,
+        district: district.trim(),
+        state: state.trim(),
+        pincode: pincode.trim(),
+        phoneNumber: phoneNumber.trim(),
+        isPrimary,
+      });
 
-    setName("");
-    setStreet("");
-    setCityState("");
-    setCountry("UK");
-    setPhone("");
-    setIsDefaultForm(false);
-    setShowAddForm(false);
+      // Reset state
+      setCustomerName("");
+      setAddressLine1("");
+      setAddressLine2("");
+      setLandmark("");
+      setDistrict("");
+      setState("");
+      setPincode("");
+      setPhoneNumber("");
+      setIsPrimary(false);
+      setShowAddForm(false);
+    } catch (err: any) {
+      alert(err.message || "Failed to save address.");
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (!isLoggedIn) {
+    return (
+      <MobileContainer>
+        <header className={styles.header}>
+          <button onClick={() => router.back()} className={styles.iconButton} aria-label="Go back">
+            <ChevronLeft size={22} strokeWidth={1.8} className={styles.icon} />
+          </button>
+          <h2 className={styles.title}>Shipping Addresses</h2>
+          <div className={styles.iconButton} />
+        </header>
+        <main className={styles.mainContent}>
+          <div className={styles.emptyState} style={{ padding: "4rem 2rem", textAlign: "center" }}>
+            <ShieldAlert size={48} strokeWidth={1} style={{ opacity: 0.3, marginBottom: "1rem" }} />
+            <p>Please log in to manage your addresses.</p>
+            <button
+              className={styles.saveBtn}
+              style={{ marginTop: "1rem", maxWidth: "200px", margin: "1rem auto 0" }}
+              onClick={() => setLoginModalOpen(true)}
+            >
+              Log In
+            </button>
+          </div>
+        </main>
+        <BottomNav />
+      </MobileContainer>
+    );
+  }
 
   return (
     <MobileContainer>
@@ -61,7 +109,7 @@ export default function ShippingAddressesPage() {
         >
           <ChevronLeft size={22} strokeWidth={1.8} className={styles.icon} />
         </button>
-        <h2 className={styles.title}>Shipping Addresses</h2>
+        <h2 className={styles.title}>Addresses</h2>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
           className={`${styles.iconButton} ${showAddForm ? styles.iconButtonActive : ""}`}
@@ -81,14 +129,14 @@ export default function ShippingAddressesPage() {
               {addresses.map((addr) => (
                 <div
                   key={addr.id}
-                  className={`${styles.addressCard} ${addr.isDefault ? styles.addressCardDefault : ""}`}
+                  className={`${styles.addressCard} ${addr.isPrimary ? styles.addressCardDefault : ""}`}
                 >
                   <div className={styles.cardHeader}>
                     <div className={styles.headerLeft}>
                       <MapPin size={18} className={styles.pinIcon} />
-                      <span className={styles.addressLabel}>{addr.name}</span>
+                      <span className={styles.addressLabel}>{addr.customerName}</span>
                     </div>
-                    {addr.isDefault ? (
+                    {addr.isPrimary ? (
                       <span className={styles.defaultBadge}>Default</span>
                     ) : (
                       <button
@@ -102,9 +150,11 @@ export default function ShippingAddressesPage() {
                   </div>
 
                   <div className={styles.cardBody}>
-                    <p className={styles.streetText}>{addr.street}</p>
-                    <p className={styles.cityText}>{addr.cityState}, {addr.country}</p>
-                    <p className={styles.phoneText}>Phone: {addr.phone}</p>
+                    <p className={styles.streetText}>{addr.addressLine1}</p>
+                    {addr.addressLine2 && <p className={styles.streetText}>{addr.addressLine2}</p>}
+                    {addr.landmark && <p className={styles.streetText} style={{ opacity: 0.6 }}>Landmark: {addr.landmark}</p>}
+                    <p className={styles.cityText}>{addr.district}, {addr.state} — {addr.pincode}</p>
+                    <p className={styles.phoneText}>Phone: {addr.phoneNumber}</p>
                   </div>
 
                   <div className={styles.cardFooter}>
@@ -128,7 +178,7 @@ export default function ShippingAddressesPage() {
             </div>
           </div>
 
-          {/* Add Address Form Block - always rendered, CSS manages mobile overlay vs desktop inline layout */}
+          {/* Add Address Form Block */}
           <div className={`${styles.formCol} ${showAddForm ? styles.formColOpen : ""}`}>
             <div className={styles.dragHandle} />
             <div className={styles.formCard}>
@@ -136,60 +186,94 @@ export default function ShippingAddressesPage() {
               <form onSubmit={handleAddAddress} className={styles.addressForm}>
                 
                 <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Name / Label</label>
+                  <label className={styles.inputLabel}>Receiver Name *</label>
                   <input
                     type="text"
-                    placeholder="e.g. Asha Royden (Home)"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Asha Royden"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
                     className={styles.textInput}
                     required
                   />
                 </div>
 
                 <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Street Address</label>
+                  <label className={styles.inputLabel}>Address Line 1 *</label>
                   <input
                     type="text"
                     placeholder="e.g. 124 Baker Street"
-                    value={street}
-                    onChange={(e) => setStreet(e.target.value)}
+                    value={addressLine1}
+                    onChange={(e) => setAddressLine1(e.target.value)}
                     className={styles.textInput}
                     required
                   />
                 </div>
 
                 <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>City & State / Postcode</label>
+                  <label className={styles.inputLabel}>Address Line 2 (Optional)</label>
                   <input
                     type="text"
-                    placeholder="e.g. London, NW1 6XE"
-                    value={cityState}
-                    onChange={(e) => setCityState(e.target.value)}
+                    placeholder="e.g. Floor 2, Apt 4"
+                    value={addressLine2}
+                    onChange={(e) => setAddressLine2(e.target.value)}
                     className={styles.textInput}
-                    required
                   />
                 </div>
 
                 <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Country</label>
+                  <label className={styles.inputLabel}>Landmark (Optional)</label>
                   <input
                     type="text"
-                    placeholder="e.g. UK"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
+                    placeholder="e.g. Near Big Ben"
+                    value={landmark}
+                    onChange={(e) => setLandmark(e.target.value)}
+                    className={styles.textInput}
+                  />
+                </div>
+
+                <div className={styles.inputGroup}>
+                  <label className={styles.inputLabel}>District *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Westminster"
+                    value={district}
+                    onChange={(e) => setDistrict(e.target.value)}
                     className={styles.textInput}
                     required
                   />
                 </div>
 
                 <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Phone Number</label>
+                  <label className={styles.inputLabel}>State *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. London"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    className={styles.textInput}
+                    required
+                  />
+                </div>
+
+                <div className={styles.inputGroup}>
+                  <label className={styles.inputLabel}>Pincode / Zipcode *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. NW16XE"
+                    value={pincode}
+                    onChange={(e) => setPincode(e.target.value)}
+                    className={styles.textInput}
+                    required
+                  />
+                </div>
+
+                <div className={styles.inputGroup}>
+                  <label className={styles.inputLabel}>Phone Number *</label>
                   <input
                     type="tel"
-                    placeholder="e.g. +44 20 7946 0958"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. +442079460958"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
                     className={styles.textInput}
                     required
                   />
@@ -199,8 +283,8 @@ export default function ShippingAddressesPage() {
                   <input
                     type="checkbox"
                     id="default-checkbox"
-                    checked={isDefaultForm}
-                    onChange={(e) => setIsDefaultForm(e.target.checked)}
+                    checked={isPrimary}
+                    onChange={(e) => setIsPrimary(e.target.checked)}
                     className={styles.checkboxInput}
                   />
                   <label htmlFor="default-checkbox" className={styles.checkboxLabel}>
@@ -208,8 +292,8 @@ export default function ShippingAddressesPage() {
                   </label>
                 </div>
 
-                <button type="submit" className={styles.saveBtn}>
-                  Save Address
+                <button type="submit" className={styles.saveBtn} disabled={isSaving}>
+                  {isSaving ? "Saving..." : "Save Address"}
                 </button>
               </form>
             </div>

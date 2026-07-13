@@ -28,17 +28,22 @@ export default function CartSidebar() {
   const [promoCode, setPromoCode] = useState("");
   const [isSelectingAddress, setIsSelectingAddress] = useState(false);
 
-  const selectedAddress = addresses.find((a) => a.id === selectedAddressId) || addresses.find((a) => a.isDefault) || addresses[0];
+  const selectedAddress = addresses.find((a) => a.id === selectedAddressId)
+    || addresses.find((a) => a.isPrimary)
+    || addresses[0];
 
-  const shippingCost = cartItems.length > 0 ? (appliedCoupon === "FREESHIP" ? 0 : 15.21) : 0;
-  const totalAmount = Math.max(0, subtotal - discountAmount + shippingCost);
+  const billSummary = useCart().cart?.billSummary;
+  const deliveryFee = billSummary?.deliveryFee ?? 0;
+  const discountDisplay = billSummary?.discountApplied ?? discountAmount;
+  const totalAmount = billSummary?.grandTotal ?? Math.max(0, subtotal - discountDisplay + deliveryFee);
 
-  const handleApplyPromo = (e: React.FormEvent) => {
+  const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (applyCoupon(promoCode)) {
-      alert(`Promo code ${promoCode.toUpperCase()} applied!`);
+    const success = await applyCoupon(promoCode);
+    if (success) {
+      alert(`✅ Coupon "${promoCode.toUpperCase()}" applied!`);
     } else {
-      alert("Invalid code! Try 'SAVE10', 'WELCOME5', or 'FREESHIP'");
+      alert("❌ Invalid or expired coupon code.");
     }
   };
 
@@ -183,13 +188,13 @@ export default function CartSidebar() {
                     {selectedAddress && (
                       <div className={styles.selectedAddressCard}>
                         <div className={styles.selectedHeader}>
-                          <span className={styles.selectedName}>{selectedAddress.name}</span>
-                          {selectedAddress.isDefault && (
+                          <span className={styles.selectedName}>{selectedAddress.customerName}</span>
+                          {selectedAddress.isPrimary && (
                             <span className={styles.miniBadge}>Default</span>
                           )}
                         </div>
-                        <p className={styles.selectedStreet}>{selectedAddress.street}</p>
-                        <p className={styles.selectedCity}>{selectedAddress.cityState}</p>
+                        <p className={styles.selectedStreet}>{selectedAddress.addressLine1}</p>
+                        <p className={styles.selectedCity}>{selectedAddress.district}, {selectedAddress.state} — {selectedAddress.pincode}</p>
                       </div>
                     )}
 
@@ -213,11 +218,11 @@ export default function CartSidebar() {
                                   }}
                                 >
                                   <div className={styles.selectorHeader}>
-                                    <span className={styles.selectorName}>{addr.name}</span>
-                                    {addr.isDefault && <span className={styles.miniBadge}>Default</span>}
+                                    <span className={styles.selectorName}>{addr.customerName}</span>
+                                    {addr.isPrimary && <span className={styles.miniBadge}>Default</span>}
                                   </div>
-                                  <p className={styles.selectorStreet}>{addr.street}</p>
-                                  <p className={styles.selectorCity}>{addr.cityState}</p>
+                                  <p className={styles.selectorStreet}>{addr.addressLine1}</p>
+                                  <p className={styles.selectorCity}>{addr.district}, {addr.state}</p>
                                 </div>
                               ))}
                           </div>
@@ -242,27 +247,33 @@ export default function CartSidebar() {
               <div className={styles.pricingSummary}>
                  <div className={styles.summaryRow}>
                    <span>Sub total:</span>
-                   <span>${subtotal.toFixed(2)}</span>
+                   <span>₹{subtotal.toFixed(2)}</span>
                  </div>
-                 {appliedCoupon && (
+                 {discountDisplay > 0 && (
                    <div className={styles.summaryRow}>
-                     <span>Discount ({appliedCoupon}):</span>
-                     <span>-${discountAmount.toFixed(2)}</span>
+                     <span>Discount:</span>
+                     <span style={{ color: "#22c55e" }}>-₹{discountDisplay.toFixed(2)}</span>
                    </div>
                  )}
-                <div className={styles.summaryRow}>
-                  <span>Shipping:</span>
-                  <span>${shippingCost.toFixed(2)}</span>
-                </div>
-                <div className={`${styles.summaryRow} ${styles.totalRow}`}>
-                  <span>Total:</span>
-                  <span>${totalAmount.toFixed(2)}</span>
-                </div>
+                 {deliveryFee > 0 && (
+                   <div className={styles.summaryRow}>
+                     <span>Delivery:</span>
+                     <span>₹{deliveryFee.toFixed(2)}</span>
+                   </div>
+                 )}
+                 <div className={`${styles.summaryRow} ${styles.totalRow}`}>
+                   <span>Total:</span>
+                   <span>₹{totalAmount.toFixed(2)}</span>
+                 </div>
               </div>
 
               {/* Checkout Button */}
               <div className={styles.checkoutAction}>
-                <button className={styles.checkoutBtn} type="button">
+                <button
+                  className={styles.checkoutBtn}
+                  type="button"
+                  onClick={() => { setSidebarOpen(false); router.push("/cart"); }}
+                >
                   Proceed to checkout
                 </button>
               </div>

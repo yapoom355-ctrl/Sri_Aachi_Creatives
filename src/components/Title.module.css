@@ -1,33 +1,50 @@
 .container {
-  padding: 12px 24px 8px 24px;
+  padding: 16px 24px 10px 24px;
   background-color: var(--background);
 }
 
+.eyebrow {
+  display: block;
+  font-size: 10px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
 .title {
-  font-size: 28px;
+  font-family: var(--font-heading);
+  font-size: 30px;
   font-weight: 500;
-  line-height: 1.25;
+  line-height: 1.15;
   color: var(--text-primary);
-  letter-spacing: -0.6px;
+  letter-spacing: 0.01em;
   transition: font-size 0.2s ease;
+}
+
+.accent {
+  font-style: italic;
+  color: var(--secondary);
+  font-weight: 600;
 }
 
 @media (min-width: 768px) {
   .container {
-    padding: 16px 32px 12px 32px;
+    padding: 20px 32px 14px 32px;
   }
   .title {
-    font-size: 34px;
-    letter-spacing: -0.8px;
+    font-size: 38px;
   }
 }
 
 @media (min-width: 1024px) {
   .container {
-    padding: 24px 0 12px 0;
+    padding: 28px 0 14px 0;
   }
   .title {
-    font-size: 42px;
-    letter-spacing: -1px;
+    font-size: 48px;
+    letter-spacing: 0.005em;
   }
 }

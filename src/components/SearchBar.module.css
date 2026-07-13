@@ -2,19 +2,19 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 24px 16px 24px;
+  padding: 10px 24px 18px 24px;
   background-color: var(--background);
 }
 
 @media (min-width: 768px) {
   .container {
-    padding: 8px 32px 16px 32px;
+    padding: 10px 32px 18px 32px;
   }
 }
 
 @media (min-width: 1024px) {
   .container {
-    padding: 8px 0 16px 0;
+    padding: 10px 0 18px 0;
   }
 }
 
@@ -32,30 +32,37 @@
   transform: translateY(-50%);
   color: var(--text-secondary);
   pointer-events: none;
+  transition: color 0.2s ease;
 }
 
 .searchInput {
   width: 100%;
-  padding: 15px 16px 15px 50px;
-  font-size: 15px;
+  padding: 14px 16px 14px 50px;
+  font-size: 14px;
+  font-family: var(--font-body);
   font-weight: 500;
   color: var(--text-primary);
   background-color: var(--card-bg);
-  border-radius: 28px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
-  transition: all 0.2s ease;
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  border-radius: 24px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s ease;
+  border: 1px solid var(--border-subtle);
 }
 
 .searchInput:focus {
   background-color: var(--card-bg);
-  border-color: rgba(99, 102, 241, 0.2);
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
+  border-color: rgba(164, 116, 73, 0.35);
+  box-shadow: 0 4px 18px rgba(164, 116, 73, 0.1);
+}
+
+.searchInput:focus + .searchIcon,
+.searchWrapper:focus-within .searchIcon {
+  color: var(--accent);
 }
 
 .searchInput::placeholder {
   color: var(--text-secondary);
-  opacity: 0.65;
+  opacity: 0.7;
 }
 
 .filterButton {
@@ -66,20 +73,26 @@
   height: 48px;
   border-radius: 50%;
   background-color: var(--card-bg);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(0, 0, 0, 0.03);
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .filterButton:hover {
-  transform: scale(1.04);
+  transform: scale(1.05);
+  border-color: var(--accent);
 }
 
 .filterButton:active {
-  transform: scale(0.96);
+  transform: scale(0.95);
   background-color: var(--input-bg);
 }
 
 .filterIcon {
   color: var(--text-primary);
+  transition: color 0.2s ease;
+}
+
+.filterButton:hover .filterIcon {
+  color: var(--accent);
 }

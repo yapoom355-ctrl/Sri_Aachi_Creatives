@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { ApolloProvider } from "@/context/ApolloProvider";
 import { CartProvider } from "@/context/CartContext";
 import CartSidebar from "@/components/CartSidebar";
+import WishlistSidebar from "@/components/WishlistSidebar";
 import LoginModal from "@/components/LoginModal";
 import Footer from "@/components/Footer";
 import "./globals.css";
@@ -53,8 +55,8 @@ const fellix = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Explore all Hoodies Storefront",
-  description: "Explore attractive discount sales for premium hoodies.",
+  title: "Sri Aachi Creatives — Premium Handcrafted Collection",
+  description: "Discover Sri Aachi Creatives — a luxury handcrafted brand celebrated for its artisanal designs, premium materials, and timeless elegance.",
 };
 
 export default function RootLayout({
@@ -65,12 +67,15 @@ export default function RootLayout({
   return (
     <html lang="en" className={fellix.variable}>
       <body>
-        <CartProvider>
-          {children}
-          <CartSidebar />
-          <LoginModal />
-          <Footer />
-        </CartProvider>
+        <ApolloProvider>
+          <CartProvider>
+            {children}
+            <CartSidebar />
+            <WishlistSidebar />
+            <LoginModal />
+            <Footer />
+          </CartProvider>
+        </ApolloProvider>
       </body>
     </html>
   );

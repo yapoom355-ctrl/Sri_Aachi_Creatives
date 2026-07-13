@@ -1,24 +1,83 @@
 "use client";
 
 import React, { useState } from "react";
+import { useQuery } from "@apollo/client/react";
+import { useSearchParams } from "next/navigation";
 import MobileContainer from "@/components/MobileContainer";
 import ProductDetailsHeader from "@/components/ProductDetailsHeader";
 import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/BottomNav";
-import { PRODUCTS } from "@/data/products";
+import { GET_PRODUCTS, GET_CATEGORIES } from "@/graphql/queries";
 import { Search } from "lucide-react";
 import styles from "./page.module.css";
+import { Product } from "@/types";
 
 export default function ExploreProductsPage() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const searchParams = useSearchParams();
+  const categoryId = searchParams.get("category");
+  const urlSearch = searchParams.get("search") || "";
+  const [searchQuery, setSearchQuery] = useState(urlSearch);
+  const { data, loading } = useQuery<any>(GET_PRODUCTS);
+  const { data: categoryData } = useQuery<any>(GET_CATEGORIES);
 
-  const filteredProducts = PRODUCTS.filter((product) =>
+  // Fallback images
+  const FALLBACK_IMAGES = [
+    "/images/product-green.png",
+    "/images/product-white.png",
+    "/images/product-brown.png",
+    "/images/product-blue.png"
+  ];
+
+  const getProductImage = (thumbnailUrl?: string | null, id?: string) => {
+    const validFiles = ["product-green.png", "product-white.png", "product-brown.png", "product-blue.png", "banner-hoodie.png"];
+    if (thumbnailUrl) {
+      const filename = thumbnailUrl.split("/").pop() || "";
+      if (validFiles.includes(filename)) {
+        return thumbnailUrl;
+      }
+    }
+    const idStr = id || "";
+    let sum = 0;
+    for (let i = 0; i < idStr.length; i++) {
+      sum += idStr.charCodeAt(i);
+    }
+    return FALLBACK_IMAGES[sum % FALLBACK_IMAGES.length];
+  };
+
+  // Map backend ProductType to frontend Product interface
+  const PRODUCTS: Product[] = data?.products?.map((p: any, index: number) => ({
+    id: p.id,
+    name: p.title,
+    subtitle: p.subtitle || "",
+    description: p.description || "",
+    price: `₹${p.effectivePrice ?? p.price ?? 0}`,
+    numericPrice: p.effectivePrice || p.price || 0,
+    image: getProductImage(p.thumbnail?.mediaUrl, p.id),
+    category: p.categories?.[0]?.id || "",
+    categoryName: p.categories?.[0]?.title || "",
+    isLiked: false,
+    rating: 5.0,
+    reviewsCount: 1,
+    colors: ["#768067", "#c08457"],
+    sizes: ["M", "L"],
+    limited: false,
+  })) || [];
+
+  const filteredByCategory = categoryId 
+    ? PRODUCTS.filter((product) => product.category === categoryId)
+    : PRODUCTS;
+
+  const filteredProducts = filteredByCategory.filter((product) =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const activeCategoryName = categoryId 
+    ? categoryData?.categories?.find((c: any) => c.id === categoryId)?.title || "Products"
+    : "All Products";
+
   return (
     <MobileContainer>
-      <ProductDetailsHeader title="Explore all Hoodies" />
+      <ProductDetailsHeader title={`Explore ${activeCategoryName}`} />
       
       <main className={styles.mainContent}>
         {/* Full-width Search Input */}
@@ -34,22 +93,17 @@ export default function ExploreProductsPage() {
         </div>
 
         {/* Product Grid */}
-        {filteredProducts.length > 0 ? (
+        {loading ? (
+          <div style={{ padding: "2rem", textAlign: "center" }}>Loading...</div>
+        ) : filteredProducts.length > 0 ? (
           <div className={styles.grid}>
             {filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
-            {/* Visual duplications to match length of screenshot */}
-            {searchQuery === "" && PRODUCTS.slice(3, 4).map((product) => (
-              <ProductCard key={`${product.id}-dup-1`} product={{...product, id: product.id}} />
-            ))}
-            {searchQuery === "" && PRODUCTS.slice(3, 4).map((product) => (
-              <ProductCard key={`${product.id}-dup-2`} product={{...product, id: product.id}} />
-            ))}
           </div>
         ) : (
           <div className={styles.emptyState}>
-            <p className={styles.emptyText}>No hoodies found matching &quot;{searchQuery}&quot;</p>
+            <p className={styles.emptyText}>No products found matching your criteria</p>
           </div>
         )}
       </main>

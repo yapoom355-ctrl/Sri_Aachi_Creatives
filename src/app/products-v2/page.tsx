@@ -1,21 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
+import { useQuery } from "@apollo/client/react";
 import MobileContainer from "@/components/MobileContainer";
 import ProductDetailsHeader from "@/components/ProductDetailsHeader";
 import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/BottomNav";
-import { PRODUCTS } from "@/data/products";
+import { GET_PRODUCTS, GET_CATEGORIES } from "@/graphql/queries";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import styles from "./page.module.css";
-
-const CATEGORIES = [
-  { id: "all", name: "All", emoji: "🛍️" },
-  { id: "hoodie", name: "Hoodies", emoji: "🧥" },
-  { id: "sneaker", name: "Sneakers", emoji: "👟" },
-  { id: "face-cap", name: "Face Caps", emoji: "🧢" },
-  { id: "watch", name: "Watches", emoji: "⌚" },
-];
 
 const SIZES = ["All", "S", "M", "L", "XL", "XXL"];
 
@@ -33,7 +26,46 @@ export default function ProductsV2Page() {
   const [selectedPriceRange, setSelectedPriceRange] = useState("all");
   const [showFilterPanel, setShowFilterPanel] = useState(true);
 
-  const filteredProducts = PRODUCTS.filter((product) => {
+  // Fetch from GraphQL
+  const { data: prodData, loading: prodLoading } = useQuery<any>(GET_PRODUCTS);
+  const { data: catData, loading: catLoading } = useQuery<any>(GET_CATEGORIES);
+
+  // Map Categories
+  const apiCategories = catData?.categories?.map((c: any) => ({
+    id: c.title.toLowerCase(),
+    name: c.title,
+    emoji: "🛍️",
+  })) || [];
+  
+  const CATEGORIES = [{ id: "all", name: "All", emoji: "🛍️" }, ...apiCategories];
+
+  // Fallback images
+  const FALLBACK_IMAGES = [
+    "/images/product-green.png",
+    "/images/product-white.png",
+    "/images/product-brown.png",
+    "/images/product-black.png"
+  ];
+
+  // Map Products
+  const productsList = prodData?.products?.map((p: any, index: number) => ({
+    id: p.id,
+    name: p.title,
+    subtitle: p.subtitle || "",
+    description: p.description || "",
+    price: `$${p.effectivePrice || p.price || 0}`,
+    numericPrice: p.effectivePrice || p.price || 0,
+    image: p.thumbnail?.mediaUrl || FALLBACK_IMAGES[index % FALLBACK_IMAGES.length],
+    category: p.categories?.[0]?.title?.toLowerCase() || "",
+    isLiked: false,
+    rating: 5.0,
+    reviewsCount: 1,
+    colors: ["#768067", "#c08457"],
+    sizes: ["S", "M", "L"],
+    limited: false,
+  })) || [];
+
+  const filteredProducts = productsList.filter((product: any) => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
     const matchesSize = selectedSize === "All" || product.sizes.includes(selectedSize);
@@ -56,6 +88,16 @@ export default function ProductsV2Page() {
     setSelectedSize("All");
     setSelectedPriceRange("all");
   };
+
+  if (prodLoading || catLoading) {
+    return (
+      <MobileContainer>
+        <ProductDetailsHeader title="Catalog Explorer" />
+        <div style={{ padding: "2rem", textAlign: "center" }}>Loading...</div>
+        <BottomNav />
+      </MobileContainer>
+    );
+  }
 
   return (
     <MobileContainer>
@@ -157,7 +199,7 @@ export default function ProductsV2Page() {
         {/* Dynamic products list grid */}
         {filteredProducts.length > 0 ? (
           <div className={styles.grid}>
-            {filteredProducts.map((product) => (
+            {filteredProducts.map((product: any) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

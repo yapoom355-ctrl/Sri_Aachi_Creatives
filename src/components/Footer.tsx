@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import styles from "./Footer.module.css";
 
@@ -10,35 +11,43 @@ export default function Footer() {
       <div className={styles.container}>
         {/* Brand Column */}
         <div className={styles.brandCol}>
-          <div className={styles.logoBadge}>G</div>
-          <h4 className={styles.brandTitle}>Gubera Shop</h4>
+          <Link href="/" className={styles.logoLink} aria-label="Sri Aachi Creatives — Home">
+            <Image
+              src="/images/sri-aachi-logo.png"
+              alt="Sri Aachi Creatives"
+              width={200}
+              height={200}
+              className={styles.footerLogo}
+            />
+          </Link>
           <p className={styles.tagline}>
-            Premium streetwear & hoodies tailored for everyday elegance and minimal aesthetics.
+            Handcrafted with love & purpose — premium artisanal creations that celebrate tradition, elegance, and timeless craft.
           </p>
+          <div className={styles.accentLine} />
         </div>
 
         {/* Link Column 1: Shop */}
         <div className={styles.linkCol}>
-          <span className={styles.colTitle}>Shop</span>
+          <span className={styles.colTitle}>Explore</span>
           <ul className={styles.linkList}>
             <li>
               <Link href="/" className={styles.link}>
-                Home Catalog
+                Home
               </Link>
             </li>
             <li>
               <Link href="/products-v2" className={styles.link}>
-                All Hoodies
+                All Collections
               </Link>
             </li>
             <li>
               <Link href="/categories-v2" className={styles.link}>
-                Categories V2
+                Categories
               </Link>
             </li>
             <li>
               <Link href="/coupons" className={styles.link}>
-                Promo Tickets
+                Offers & Deals
               </Link>
             </li>
           </ul>
@@ -68,24 +77,24 @@ export default function Footer() {
 
         {/* Link Column 3: Contact Info */}
         <div className={styles.linkCol}>
-          <span className={styles.colTitle}>Contact Us</span>
+          <span className={styles.colTitle}>Get in Touch</span>
           <ul className={styles.contactList}>
             <li>
-              <span className={styles.contactLabel}>Email:</span>
-              <a href="mailto:asha.royden@example.com" className={styles.contactValue}>
-                asha.royden@example.com
+              <span className={styles.contactLabel}>Email</span>
+              <a href="mailto:hello@sriaachicreatives.com" className={styles.contactValue}>
+                hello@sriaachicreatives.com
               </a>
             </li>
             <li>
-              <span className={styles.contactLabel}>Phone:</span>
-              <a href="tel:+12345678900" className={styles.contactValue}>
-                +1 (234) 567-8900
+              <span className={styles.contactLabel}>Phone</span>
+              <a href="tel:+919999999999" className={styles.contactValue}>
+                +91 99999 99999
               </a>
             </li>
             <li>
-              <span className={styles.contactLabel}>Store Address:</span>
+              <span className={styles.contactLabel}>Studio</span>
               <span className={styles.contactValue}>
-                123 Fashion Blvd, Suite 100, New York, NY 10001
+                Sri Aachi Creatives Studio, Chennai, Tamil Nadu
               </span>
             </li>
           </ul>
@@ -94,7 +103,7 @@ export default function Footer() {
 
       <div className={styles.bottomRow}>
         <span className={styles.copyright}>
-          © {new Date().getFullYear()} Gubera Shop. All rights reserved. Built for Asha Royden.
+          © {new Date().getFullYear()} Sri Aachi Creatives. All rights reserved. Crafted with care.
         </span>
       </div>
     </footer>

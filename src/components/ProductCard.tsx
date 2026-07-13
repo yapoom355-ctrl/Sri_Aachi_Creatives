@@ -5,8 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Heart, ShoppingCart, Plus, Minus } from "lucide-react";
+import { useCart } from "@/context/CartContext";
 import styles from "./ProductCard.module.css";
-import { Product } from "@/data/products";
+import { Product } from "@/types";
 
 interface ProductCardProps {
   product: Product;
@@ -14,27 +15,34 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
-  const [liked, setLiked] = useState(product.isLiked || false);
-  const [quantity, setQuantity] = useState(0);
+  const { addToCart, cartItems, updateQuantity, wishlist, toggleWishlist } = useCart();
+  const liked = wishlist ? wishlist.includes(product.id) : false;
+
+  const cartItem = cartItems.find((i) => i.id === product.id);
+  const quantity = cartItem ? cartItem.quantity : 0;
 
   const handleIncrement = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    setQuantity(quantity + 1);
+    if (quantity === 0) {
+      addToCart(product.id, 1);
+    } else {
+      updateQuantity(product.id, product.sizes?.[0] || "M", product.colors?.[0] || "#000", quantity + 1);
+    }
   };
 
   const handleDecrement = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     if (quantity > 0) {
-      setQuantity(quantity - 1);
+      updateQuantity(product.id, product.sizes?.[0] || "M", product.colors?.[0] || "#000", quantity - 1);
     }
   };
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    setLiked(!liked);
+    toggleWishlist(product.id);
   };
 
   const handleNavigate = (e: React.MouseEvent) => {

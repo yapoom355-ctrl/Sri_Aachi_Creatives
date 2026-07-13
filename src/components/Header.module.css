@@ -2,25 +2,67 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 24px 12px 24px;
+  padding: 18px 24px 14px 24px;
   background-color: var(--background);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 @media (min-width: 768px) {
   .header {
-    padding: 32px 32px 16px 32px;
+    padding: 20px 32px 16px 32px;
   }
 }
 
+/* Brand logo */
+.brandLogoLink {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  flex: 1;
+}
+
+.brandLogo {
+  object-fit: contain;
+  height: 52px;
+  width: auto;
+  max-width: 200px;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.brandLogo:hover {
+  opacity: 0.88;
+  transform: scale(1.01);
+}
+
+@media (min-width: 768px) {
+  .brandLogo {
+    height: 60px;
+    max-width: 230px;
+  }
+}
+
+/* Profile pic */
 .profilePic {
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid var(--border-subtle);
+  transition: border-color 0.2s ease;
 }
 
+.profilePic:hover {
+  border-color: var(--accent);
+}
+
+/* Action buttons */
 .actionsContainer {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
 }
 
 .iconButton {
@@ -32,16 +74,18 @@
   height: 38px;
   border-radius: 50%;
   background-color: var(--card-bg);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .iconButton:hover {
-  transform: scale(1.04);
+  transform: scale(1.05);
+  border-color: var(--accent);
 }
 
 .iconButton:active {
-  transform: scale(0.96);
+  transform: scale(0.95);
   background-color: var(--input-bg);
 }
 
@@ -52,12 +96,12 @@
 .notificationBadge {
   position: absolute;
   top: 8px;
-  right: 9px;
-  width: 8px;
-  height: 8px;
-  background-color: var(--like-active);
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  background-color: var(--accent);
   border-radius: 50%;
-  border: 1.5px solid var(--card-bg);
+  border: 1.5px solid var(--background);
 }
 
 .cartBadge {
@@ -67,11 +111,11 @@
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  background-color: var(--like-active);
+  background: var(--accent-gradient);
   color: #ffffff;
   border-radius: 8px;
   font-size: 9px;
-  font-weight: 800;
+  font-weight: 700;
   display: flex;
   justify-content: center;
   align-items: center;

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@apollo/client/react";
 import MobileContainer from "@/components/MobileContainer";
@@ -13,7 +13,7 @@ import styles from "./page.module.css";
 export default function AllCategoriesPage() {
   const router = useRouter();
   const { data, loading, error } = useQuery<any>(GET_CATEGORIES, {
-    fetchPolicy: "cache-and-network",
+    fetchPolicy: "cache-first",
   });
 
   const getEmoji = (title: string) => {
@@ -41,13 +41,13 @@ export default function AllCategoriesPage() {
     return gradients[sum % gradients.length];
   };
 
-  const categories = data?.categories?.map((c: any) => ({
+  const categories = useMemo(() => data?.categories?.map((c: any) => ({
     id: c.id,
     name: c.title,
     emoji: getEmoji(c.title),
     count: "Explore", // Or if products count is available we can use it
     gradient: getGradient(c.id),
-  })) || [];
+  })) || [], [data]);
 
   const handleCategorySelect = (id: string) => {
     router.push(`/products?category=${id}`);

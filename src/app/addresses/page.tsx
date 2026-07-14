@@ -189,7 +189,7 @@ export default function ShippingAddressesPage() {
                   <label className={styles.inputLabel}>Receiver Name *</label>
                   <input
                     type="text"
-                    placeholder="e.g. Asha Royden"
+                    placeholder="e.g. John Doe"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     className={styles.textInput}

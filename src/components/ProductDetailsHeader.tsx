@@ -21,7 +21,7 @@ export default function ProductDetailsHeader({ title = "Product Details" }: { ti
   return (
     <header className={styles.header}>
       <button
-        onClick={() => router.back()}
+        onClick={() => window.history.length > 2 ? router.back() : router.push("/")}
         className={styles.iconButton}
         aria-label="Go back"
       >

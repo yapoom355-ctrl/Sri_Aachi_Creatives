@@ -11,9 +11,10 @@ import { Product } from "@/types";
 
 interface ProductCardProps {
   product: Product;
+  priority?: boolean;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, priority = false }: ProductCardProps) {
   const router = useRouter();
   const { addToCart, cartItems, updateQuantity, wishlist, toggleWishlist } = useCart();
   const liked = wishlist ? wishlist.includes(product.id) : false;
@@ -74,7 +75,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             style={{
               viewTransitionName: `product-image-${product.id}`,
             } as React.CSSProperties}
-            priority
+            priority={priority}
           />
         </div>
         <div className={styles.details}>

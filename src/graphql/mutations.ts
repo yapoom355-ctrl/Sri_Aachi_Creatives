@@ -9,8 +9,7 @@ export const LOGIN_WITH_PASSWORD = gql`
       user {
         id
         email
-        firstName
-        lastName
+        name
         mobilenumber
       }
     }
@@ -36,8 +35,7 @@ export const LOGIN_WITH_OTP = gql`
       }
       user {
         id
-        firstName
-        lastName
+        name
         email
         mobilenumber
       }
@@ -50,8 +48,7 @@ export const UPDATE_ME = gql`
   mutation UpdateMe($input: UpdateUserInput!) {
     updateMe(input: $input) {
       id
-      firstName
-      lastName
+      name
       email
       mobilenumber
     }

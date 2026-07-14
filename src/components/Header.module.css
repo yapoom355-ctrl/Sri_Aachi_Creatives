@@ -14,7 +14,11 @@
 
 @media (min-width: 768px) {
   .header {
-    padding: 20px 32px 16px 32px;
+    padding: 20px 48px 16px 48px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
   }
 }
 
@@ -41,8 +45,8 @@
 
 @media (min-width: 768px) {
   .brandLogo {
-    height: 60px;
-    max-width: 230px;
+    height: 130px;
+    max-width: 350px;
   }
 }
 

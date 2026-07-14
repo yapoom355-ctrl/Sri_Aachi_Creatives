@@ -8,7 +8,8 @@ export default function ClearAuthPage() {
     localStorage.removeItem("token");
     console.log("Token cleared from localStorage");
     // Redirect home after clearing
-    setTimeout(() => router.push("/"), 1500);
+    const timer = setTimeout(() => router.push("/"), 1500);
+    return () => clearTimeout(timer);
   }, [router]);
 
   return (

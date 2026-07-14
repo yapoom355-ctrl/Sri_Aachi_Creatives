@@ -27,8 +27,8 @@ export default function Header() {
         <Image
           src="/images/sri-aachi-logo.png"
           alt="Sri Aachi Creatives"
-          width={200}
-          height={200}
+          width={400}
+          height={400}
           className={styles.brandLogo}
           priority
         />

@@ -65,7 +65,7 @@ export default function ProductPage({ params }: ProductPageProps) {
         <div style={{ padding: "2rem", textAlign: "center" }}>
           <p>Product not found.</p>
           <button
-            onClick={() => router.back()}
+            onClick={() => window.history.length > 2 ? router.back() : router.push("/products")}
             style={{ marginTop: "1rem", padding: "0.5rem 1.5rem", borderRadius: "8px", border: "1px solid #ccc", cursor: "pointer" }}
           >
             Go Back

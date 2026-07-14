@@ -58,7 +58,20 @@ const errorLink = onError((errorObj: any) => {
 
 const client = new ApolloClient({
   link: from([errorLink, authLink, httpLink]),
-  cache: new InMemoryCache(),
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          products: {
+            keyArgs: ["productType", "search"],
+          },
+          categories: {
+            keyArgs: ["search"],
+          },
+        },
+      },
+    },
+  }),
 });
 
 export function ApolloProvider({ children }: { children: ReactNode }) {

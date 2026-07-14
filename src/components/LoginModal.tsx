@@ -117,7 +117,7 @@ export default function LoginModal() {
       }
 
       // Persist token and update cart context
-      const backendName = [userData?.firstName, userData?.lastName].filter(Boolean).join(" ");
+      const backendName = userData?.name || "";
       const userName = backendName || userData?.mobilenumber || "User";
       login(accessToken, {
         name: userName,
@@ -204,15 +204,6 @@ export default function LoginModal() {
           </div>
         )}
 
-        {/* Dev OTP hint */}
-        {devOtp && (
-          <div
-            className={styles.errorBanner}
-            style={{ background: "#fef9c3", color: "#854d0e", borderColor: "#fde047", marginTop: 0 }}
-          >
-            🔑 Dev OTP: <strong>{devOtp}</strong>
-          </div>
-        )}
 
         {step === 1 ? (
           /* ── Step 1: Enter Phone ── */

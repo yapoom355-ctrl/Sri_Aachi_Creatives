@@ -166,7 +166,7 @@ export default function MyOrdersPage() {
         {loading ? (
           <div style={{ padding: "2rem", textAlign: "center" }}>Loading orders...</div>
         ) : error ? (
-          <div style={{ padding: "2rem", textAlign: "center", color: "red" }}>Failed to load orders.</div>
+          <div style={{ padding: "2rem", textAlign: "center", color: "red" }}>Failed to load orders: {error.message}</div>
         ) : filteredOrders.length > 0 ? (
           <div className={styles.ordersList}>
             {filteredOrders.map((order: any) => (

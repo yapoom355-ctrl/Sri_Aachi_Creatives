@@ -320,6 +320,10 @@ export default function ProfilePage() {
                         router.push("/addresses");
                       } else if (item.id === "promos") {
                         alert("Your active promo code is: SAVE10");
+                      } else if (item.id === "payment") {
+                        router.push("/payment");
+                      } else if (item.id === "settings") {
+                        router.push("/settings");
                       } else if (item.id === "logout") {
                         logout();
                       }

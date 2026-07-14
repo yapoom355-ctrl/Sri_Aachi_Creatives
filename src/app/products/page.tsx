@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, Suspense, useMemo } from "react";
 import { useQuery } from "@apollo/client/react";
 import { useSearchParams } from "next/navigation";
 import MobileContainer from "@/components/MobileContainer";
@@ -17,8 +17,8 @@ function ExploreProductsContent() {
   const categoryId = searchParams.get("category");
   const urlSearch = searchParams.get("search") || "";
   const [searchQuery, setSearchQuery] = useState(urlSearch);
-  const { data, loading } = useQuery<any>(GET_PRODUCTS);
-  const { data: categoryData } = useQuery<any>(GET_CATEGORIES);
+  const { data, loading } = useQuery<any>(GET_PRODUCTS, { fetchPolicy: "cache-first" });
+  const { data: categoryData } = useQuery<any>(GET_CATEGORIES, { fetchPolicy: "cache-first" });
 
   // Fallback images
   const FALLBACK_IMAGES = [
@@ -45,31 +45,37 @@ function ExploreProductsContent() {
   };
 
   // Map backend ProductType to frontend Product interface
-  const PRODUCTS: Product[] = data?.products?.map((p: any, index: number) => ({
-    id: p.id,
-    name: p.title,
-    subtitle: p.subtitle || "",
-    description: p.description || "",
-    price: `₹${p.effectivePrice ?? p.price ?? 0}`,
-    numericPrice: p.effectivePrice || p.price || 0,
-    image: getProductImage(p.thumbnail?.mediaUrl, p.id),
-    category: p.categories?.[0]?.id || "",
-    categoryName: p.categories?.[0]?.title || "",
-    isLiked: false,
-    rating: 5.0,
-    reviewsCount: 1,
-    colors: ["#768067", "#c08457"],
-    sizes: ["M", "L"],
-    limited: false,
-  })) || [];
+  const PRODUCTS: Product[] = useMemo(() => {
+    return data?.products?.map((p: any, index: number) => ({
+      id: p.id,
+      name: p.title,
+      subtitle: p.subtitle || "",
+      description: p.description || "",
+      price: `₹${p.effectivePrice ?? p.price ?? 0}`,
+      numericPrice: p.effectivePrice || p.price || 0,
+      image: getProductImage(p.thumbnail?.mediaUrl, p.id),
+      category: p.categories?.[0]?.id || "",
+      categoryName: p.categories?.[0]?.title || "",
+      isLiked: false,
+      rating: 5.0,
+      reviewsCount: 1,
+      colors: ["#768067", "#c08457"],
+      sizes: ["M", "L"],
+      limited: false,
+    })) || [];
+  }, [data]);
 
-  const filteredByCategory = categoryId 
-    ? PRODUCTS.filter((product) => product.category === categoryId)
-    : PRODUCTS;
+  const filteredByCategory = useMemo(() => {
+    return categoryId 
+      ? PRODUCTS.filter((product) => product.category === categoryId)
+      : PRODUCTS;
+  }, [PRODUCTS, categoryId]);
 
-  const filteredProducts = filteredByCategory.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = useMemo(() => {
+    return filteredByCategory.filter((product) =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [filteredByCategory, searchQuery]);
 
   const activeCategoryName = categoryId 
     ? categoryData?.categories?.find((c: any) => c.id === categoryId)?.title || "Products"
@@ -97,8 +103,8 @@ function ExploreProductsContent() {
           <div style={{ padding: "2rem", textAlign: "center" }}>Loading...</div>
         ) : filteredProducts.length > 0 ? (
           <div className={styles.grid}>
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {filteredProducts.map((product, index) => (
+              <ProductCard key={product.id} product={product} priority={index < 4} />
             ))}
           </div>
         ) : (

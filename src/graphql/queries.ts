@@ -4,8 +4,7 @@ export const GET_ME = gql`
   query GetMe {
     me {
       id
-      firstName
-      lastName
+      name
       email
       mobilenumber
     }

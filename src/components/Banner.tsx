@@ -28,14 +28,22 @@ export default function Banner() {
   const [fade, setFade] = useState(true);
   const { data, loading, error } = useQuery<any>(GET_PRODUCTS, { fetchPolicy: "cache-first" });
 
-  const dynamicSlides = data?.products?.slice(0, 5).map((p: any) => ({
-    tag: p.categories?.[0]?.title || "Featured Product",
+  const FALLBACK_IMAGES = [
+    "/images/product-green.png",
+    "/images/product-white.png",
+    "/images/product-brown.png",
+    "/images/product-blue.png",
+    "/images/banner-hoodie.png",
+  ];
+
+  const dynamicSlides = data?.products?.slice(0, 5).map((p: any, index: number) => ({
+    tag: p.categories?.[0]?.title || "Featured",
     title: (
       <span style={{ fontSize: "0.95em", lineHeight: "1.2" }}>
         {p.title}
       </span>
     ),
-    image: p.thumbnail?.mediaUrl || "/images/resin-table.webp",
+    image: p.thumbnail?.mediaUrl || FALLBACK_IMAGES[index % FALLBACK_IMAGES.length],
     link: `/product/${p.id}`,
   })) || [];
 

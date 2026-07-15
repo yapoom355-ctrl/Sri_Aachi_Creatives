@@ -417,8 +417,8 @@ export default function MobileCartPage() {
                 {isCheckingOut
                   ? "Processing…"
                   : paymentMethod === "COD"
-                  ? "Place Order (COD)"
-                  : "Proceed to Pay"}
+                    ? "Place Order (COD)"
+                    : "Proceed to Pay"}
               </button>
             </div>
           </>

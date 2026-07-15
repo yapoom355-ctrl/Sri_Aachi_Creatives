@@ -57,6 +57,31 @@ const fellix = localFont({
 export const metadata: Metadata = {
   title: "Sri Aachi Creatives — Premium Handcrafted Collection",
   description: "Discover Sri Aachi Creatives — a luxury handcrafted brand celebrated for its artisanal designs, premium materials, and timeless elegance.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://sriaachicreatives.com'),
+  openGraph: {
+    title: "Sri Aachi Creatives — Premium Handcrafted Collection",
+    description: "Discover Sri Aachi Creatives — a luxury handcrafted brand celebrated for its artisanal designs, premium materials, and timeless elegance.",
+    url: "/",
+    siteName: "Sri Aachi Creatives",
+    images: [
+      {
+        url: "/images/sri-aachi-logo.png", // Fallback to logo for OG image
+        width: 800,
+        height: 600,
+      },
+    ],
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sri Aachi Creatives",
+    description: "Premium handcrafted collection.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

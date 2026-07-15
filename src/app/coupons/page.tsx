@@ -155,7 +155,7 @@ export default function CouponsPage() {
                       <p className={styles.description}>{coupon.description}</p>
                       <span className={styles.expiry}>{coupon.expiry}</span>
                     </div>
-                    
+
                     <div className={styles.codeRow}>
                       <div className={styles.codeBox}>
                         <span className={styles.codeText}>{coupon.code}</span>

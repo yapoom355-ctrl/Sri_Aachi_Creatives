@@ -22,7 +22,7 @@
 
 .card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 8px 25px rgba(139, 69, 19, 0.35);
 }
 
 .imageWrapper {

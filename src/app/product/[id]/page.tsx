@@ -6,8 +6,6 @@ import { useRouter } from "next/navigation";
 import { Star } from "lucide-react";
 import { useQuery } from "@apollo/client/react";
 import ProductDetailsHeader from "@/components/ProductDetailsHeader";
-import SizeSelector from "@/components/SizeSelector";
-import ColorSelector from "@/components/ColorSelector";
 import FavoriteButton from "@/components/FavoriteButton";
 import DetailsAddToCart from "@/components/DetailsAddToCart";
 import { GET_PRODUCT } from "@/graphql/queries";
@@ -27,19 +25,16 @@ export default function ProductPage({ params }: ProductPageProps) {
 
   // Fallback images
   const FALLBACK_IMAGES = [
-    "/images/product-green.png",
-    "/images/product-white.png",
-    "/images/product-brown.png",
-    "/images/product-blue.png"
+    "/images/resin-art-block.webp",
+    "/images/resin-table.webp",
+    "/images/photo-frame.webp",
+    "/images/motor-engine-table.webp",
+    "/images/motor-engine-table-3.webp"
   ];
 
   const getProductImage = (thumbnailUrl?: string | null, pid?: string) => {
-    const validFiles = ["product-green.png", "product-white.png", "product-brown.png", "product-blue.png", "banner-hoodie.png"];
     if (thumbnailUrl) {
-      const filename = thumbnailUrl.split("/").pop() || "";
-      if (validFiles.includes(filename)) {
-        return thumbnailUrl;
-      }
+      return thumbnailUrl;
     }
     const idStr = pid || "";
     let sum = 0;
@@ -53,7 +48,17 @@ export default function ProductPage({ params }: ProductPageProps) {
     return (
       <div className={styles.pageWrapper}>
         <ProductDetailsHeader />
-        <div style={{ padding: "2rem", textAlign: "center" }}>Loading product...</div>
+        <main className={styles.mainContent}>
+          <div className={styles.imageBlock}>
+            <div className={styles.imageCard} style={{ background: "#f0f0f0", height: "420px", width: "100%", borderRadius: "20px", animation: "pulse 1.5s infinite" }} />
+          </div>
+          <div className={styles.infoBlock}>
+            <div style={{ background: "#f0f0f0", height: "32px", width: "70%", marginBottom: "1rem", borderRadius: "8px", animation: "pulse 1.5s infinite" }} />
+            <div style={{ background: "#f0f0f0", height: "24px", width: "30%", marginBottom: "2rem", borderRadius: "8px", animation: "pulse 1.5s infinite" }} />
+            <div style={{ background: "#f0f0f0", height: "100px", width: "100%", marginBottom: "2rem", borderRadius: "8px", animation: "pulse 1.5s infinite" }} />
+            <div style={{ background: "#f0f0f0", height: "50px", width: "100%", borderRadius: "8px", animation: "pulse 1.5s infinite" }} />
+          </div>
+        </main>
       </div>
     );
   }
@@ -124,7 +129,7 @@ export default function ProductPage({ params }: ProductPageProps) {
   return (
     <div className={styles.pageWrapper}>
       <ProductDetailsHeader />
-      
+
       <main className={styles.mainContent}>
         {/* Left Column - Product Image */}
         <div className={styles.imageBlock}>
@@ -173,18 +178,7 @@ export default function ProductPage({ params }: ProductPageProps) {
             </span>
           </div>
 
-          {/* Size & Color Swatches */}
-          <div className={styles.optionsRow}>
-            <div className={styles.optionSection}>
-              <h4 className={styles.optionLabel}>Size</h4>
-              <SizeSelector sizes={product.sizes} />
-            </div>
-            <div className={styles.optionSection}>
-              <h4 className={styles.optionLabel}>Color</h4>
-              <ColorSelector colors={product.colors} />
-            </div>
-          </div>
-
+          {/* Size & Color Swatches Removed */}
           {/* Checkout Action Button */}
           <div className={styles.actionContainer}>
             <DetailsAddToCart productId={product.id} />

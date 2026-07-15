@@ -22,19 +22,16 @@ import {
 
 
 const FALLBACK_IMAGES = [
-  "/images/product-green.png",
-  "/images/product-white.png",
-  "/images/product-brown.png",
-  "/images/product-blue.png",
+  "/images/resin-art-block.webp",
+  "/images/resin-table.webp",
+  "/images/photo-frame.webp",
+  "/images/motor-engine-table.webp",
+  "/images/motor-engine-table-3.webp",
 ];
 
 const getProductImage = (thumbnailUrl?: string | null, id?: string) => {
-  const validFiles = ["product-green.png", "product-white.png", "product-brown.png", "product-blue.png", "banner-hoodie.png"];
   if (thumbnailUrl) {
-    const filename = thumbnailUrl.split("/").pop() || "";
-    if (validFiles.includes(filename)) {
-      return thumbnailUrl;
-    }
+    return thumbnailUrl;
   }
   const idStr = id || "";
   let sum = 0;

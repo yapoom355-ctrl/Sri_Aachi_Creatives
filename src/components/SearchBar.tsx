@@ -35,6 +35,7 @@ export default function SearchBar() {
         <input
           type="text"
           placeholder="Search"
+          aria-label="Search products"
           className={styles.searchInput}
           value={query}
           onChange={(e) => setQuery(e.target.value)}

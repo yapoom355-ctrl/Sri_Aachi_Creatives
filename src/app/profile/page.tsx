@@ -146,8 +146,8 @@ export default function ProfilePage() {
             <p className={styles.loggedOutText}>
               Track your orders, manage shipping addresses, and use exclusive coupons.
             </p>
-            <button 
-              type="button" 
+            <button
+              type="button"
               className={styles.loginBtn}
               onClick={() => setLoginModalOpen(true)}
             >

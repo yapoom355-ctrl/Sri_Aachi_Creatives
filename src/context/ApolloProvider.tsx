@@ -45,7 +45,8 @@ const errorLink = onError((errorObj: any) => {
         msg.toLowerCase().includes("invalid token") ||
         msg.toLowerCase().includes("token format") ||
         msg.toLowerCase().includes("not authenticated") ||
-        msg.toLowerCase().includes("unauthorized");
+        msg.toLowerCase().includes("unauthorized") ||
+        msg.toLowerCase().includes("different tenant");
 
       if (isAuthError && typeof window !== "undefined") {
         // Clear the bad token so future requests go through cleanly

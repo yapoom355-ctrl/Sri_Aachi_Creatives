@@ -15,26 +15,18 @@ export default function ProductGrid({ wishlistOnly = false }: { wishlistOnly?: b
   }) as any;
 
   const FALLBACK_IMAGES = [
-    "/images/product-green.png",
-    "/images/product-white.png",
-    "/images/product-brown.png",
-    "/images/product-blue.png",
+    "/images/resin-art-block.webp",
+    "/images/resin-table.webp",
+    "/images/photo-frame.webp",
+    "/images/motor-engine-table.webp",
+    "/images/motor-engine-table-3.webp",
   ];
 
-  const getProductImage = (thumbnailUrl?: string | null, id?: string) => {
-    const validFiles = ["product-green.png", "product-white.png", "product-brown.png", "product-blue.png", "banner-hoodie.png"];
+  const getProductImage = (thumbnailUrl?: string | null, id?: string, index: number = 0) => {
     if (thumbnailUrl) {
-      const filename = thumbnailUrl.split("/").pop() || "";
-      if (validFiles.includes(filename)) {
-        return thumbnailUrl;
-      }
+      return thumbnailUrl;
     }
-    const idStr = id || "";
-    let sum = 0;
-    for (let i = 0; i < idStr.length; i++) {
-      sum += idStr.charCodeAt(i);
-    }
-    return FALLBACK_IMAGES[sum % FALLBACK_IMAGES.length];
+    return FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
   };
 
   if (loading && !data) {
@@ -47,6 +39,10 @@ export default function ProductGrid({ wishlistOnly = false }: { wishlistOnly?: b
 
   if (error) {
     console.error("ProductGrid error:", error.message);
+    if (typeof window !== "undefined" && error.message.includes("tenant")) {
+      localStorage.removeItem("token");
+      window.location.reload();
+    }
     return (
       <div style={{ padding: "2rem", textAlign: "center", color: "#dc2626", fontSize: "0.85rem" }}>
         ⚠️ Could not load products. Please refresh the page.
@@ -61,7 +57,7 @@ export default function ProductGrid({ wishlistOnly = false }: { wishlistOnly?: b
     description: p.description || "",
     price: `₹${p.effectivePrice ?? p.price ?? 0}`,
     numericPrice: p.effectivePrice ?? p.price ?? 0,
-    image: getProductImage(p.thumbnail?.mediaUrl, p.id),
+    image: getProductImage(p.thumbnail?.mediaUrl, p.id, index),
     category: p.categories?.[0]?.id || "",
     categoryName: p.categories?.[0]?.title || "",
     isLiked: false,
@@ -75,6 +71,8 @@ export default function ProductGrid({ wishlistOnly = false }: { wishlistOnly?: b
   if (wishlistOnly) {
     products = products.filter((product: any) => wishlist.includes(product.id));
   }
+  
+  // Display all products instead of limiting to 5
 
   if (products.length === 0) {
     return (

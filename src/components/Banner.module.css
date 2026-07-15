@@ -29,7 +29,7 @@
 }
 
 .content {
-  flex: 1.2;
+  flex: 1.5;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -55,7 +55,7 @@
 
 .title {
   font-family: var(--font-heading);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 500;
   line-height: 1.2;
   color: var(--text-primary);
@@ -107,7 +107,7 @@
 }
 
 .imageContainer {
-  flex: 0.9;
+  flex: 0.7;
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -119,9 +119,10 @@
 .hoodieImage {
   object-fit: contain;
   filter: drop-shadow(0 8px 20px rgba(30, 26, 23, 0.12));
-  position: absolute;
-  right: -10px;
-  top: -10px;
+  position: relative;
+  right: -15px;
+  max-width: 100%;
+  height: auto;
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

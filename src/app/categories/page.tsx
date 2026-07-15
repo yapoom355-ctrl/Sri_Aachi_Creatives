@@ -27,26 +27,11 @@ export default function AllCategoriesPage() {
     return "🛍️";
   };
 
-  const getGradient = (id: string) => {
-    const gradients = [
-      "linear-gradient(135deg, #e9e9e7 0%, #dfdfdf 100%)",
-      "linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)",
-      "linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)",
-      "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-    ];
-    let sum = 0;
-    for (let i = 0; i < id.length; i++) {
-      sum += id.charCodeAt(i);
-    }
-    return gradients[sum % gradients.length];
-  };
-
   const categories = useMemo(() => data?.categories?.map((c: any) => ({
     id: c.id,
     name: c.title,
-    emoji: getEmoji(c.title),
-    count: "Explore", // Or if products count is available we can use it
-    gradient: getGradient(c.id),
+    image: c.thumbnail?.mediaUrl,
+    count: "Explore",
   })) || [], [data]);
 
   const handleCategorySelect = (id: string) => {
@@ -55,7 +40,7 @@ export default function AllCategoriesPage() {
 
   return (
     <MobileContainer>
-      <ProductDetailsHeader title="All Categories" />
+      <ProductDetailsHeader title="Shop by Category" as="h1" />
 
       <main className={styles.mainContent}>
         {loading ? (
@@ -69,11 +54,14 @@ export default function AllCategoriesPage() {
                 key={category.id}
                 className={styles.card}
                 onClick={() => handleCategorySelect(category.id)}
-                style={{ background: category.gradient }}
                 type="button"
               >
-                <div className={styles.emojiContainer}>
-                  <span className={styles.emoji}>{category.emoji}</span>
+                <div className={styles.emojiContainer} style={{ overflow: "hidden", position: "relative" }}>
+                  {category.image ? (
+                    <img src={category.image} alt={category.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <span className={styles.emoji}>🛍️</span>
+                  )}
                 </div>
                 
                 <div className={styles.info}>

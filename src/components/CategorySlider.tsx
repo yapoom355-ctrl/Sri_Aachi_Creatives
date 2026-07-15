@@ -9,23 +9,30 @@ import styles from "./CategorySlider.module.css";
 interface Category {
   id: string;
   name: string;
-  emoji: string;
+  image?: string;
 }
 
 export default function CategorySlider() {
   const router = useRouter();
-  const [activeCategory, setActiveCategory] = useState("hoodie");
+  const [activeCategory, setActiveCategory] = useState("all");
   const { data, loading } = useQuery<any>(GET_CATEGORIES);
 
-  const CATEGORIES: Category[] = data?.categories?.map((c: any) => ({
-    id: c.id,
-    name: c.title,
-    emoji: "🛍️",
-  })) || [];
+  const CATEGORIES: Category[] = [
+    { id: "all", name: "All Products" },
+    ...(data?.categories?.map((c: any) => ({
+      id: c.id,
+      name: c.title,
+      image: c.thumbnail?.mediaUrl,
+    })) || [])
+  ];
 
   const handleCategoryClick = (id: string) => {
     setActiveCategory(id);
-    router.push(`/products?category=${id}`);
+    if (id === "all") {
+      router.push("/products");
+    } else {
+      router.push(`/products?category=${id}`);
+    }
   };
 
   if (loading) {
@@ -43,8 +50,12 @@ export default function CategorySlider() {
               className={`${styles.pill} ${isActive ? styles.activePill : styles.inactivePill}`}
               onClick={() => handleCategoryClick(category.id)}
             >
-              <span className={styles.emojiCircle}>
-                {category.emoji}
+              <span className={styles.emojiCircle} style={{ overflow: "hidden", position: "relative" }}>
+                {category.image ? (
+                  <img src={category.image} alt={category.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  "🛍️"
+                )}
               </span>
               <span className={styles.name}>{category.name}</span>
             </button>

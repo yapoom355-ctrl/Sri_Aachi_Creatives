@@ -6,7 +6,7 @@ import { ChevronLeft, ShoppingBag } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import styles from "./ProductDetailsHeader.module.css";
 
-export default function ProductDetailsHeader({ title = "Product Details" }: { title?: string }) {
+export default function ProductDetailsHeader({ title = "Product Details", as = "h2" }: { title?: string, as?: "h1" | "h2" }) {
   const router = useRouter();
   const { cartCount, setSidebarOpen } = useCart();
 
@@ -18,6 +18,8 @@ export default function ProductDetailsHeader({ title = "Product Details" }: { ti
     }
   };
 
+  const TitleTag = as;
+
   return (
     <header className={styles.header}>
       <button
@@ -27,11 +29,11 @@ export default function ProductDetailsHeader({ title = "Product Details" }: { ti
       >
         <ChevronLeft size={22} strokeWidth={1.8} className={styles.icon} />
       </button>
-      
-      <h2 className={styles.title}>{title}</h2>
-      
-      <button 
-        className={styles.iconButton} 
+
+      <TitleTag className={styles.title}>{title}</TitleTag>
+
+      <button
+        className={styles.iconButton}
         aria-label="Shopping Cart"
         onClick={handleCartClick}
       >

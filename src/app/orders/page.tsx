@@ -41,19 +41,16 @@ export default function MyOrdersPage() {
 
   // Fallback images logic
   const FALLBACK_IMAGES = [
-    "/images/product-green.png",
-    "/images/product-white.png",
-    "/images/product-brown.png",
-    "/images/product-blue.png",
+    "/images/resin-art-block.webp",
+    "/images/resin-table.webp",
+    "/images/photo-frame.webp",
+    "/images/motor-engine-table.webp",
+    "/images/motor-engine-table-3.webp",
   ];
 
   const getProductImage = (thumbnailUrl?: string | null, pid?: string) => {
-    const validFiles = ["product-green.png", "product-white.png", "product-brown.png", "product-blue.png", "banner-hoodie.png"];
     if (thumbnailUrl) {
-      const filename = thumbnailUrl.split("/").pop() || "";
-      if (validFiles.includes(filename)) {
-        return thumbnailUrl;
-      }
+      return thumbnailUrl;
     }
     const idStr = pid || "";
     let sum = 0;
@@ -67,11 +64,11 @@ export default function MyOrdersPage() {
     const s = backendStatus?.toUpperCase() || "";
     if (s === "DELIVERED" || s === "COMPLETED") return "Completed";
     if (s === "CANCELLED" || s === "REFUNDED" || s === "FAILED") return "Cancelled";
-    return "Active"; 
+    return "Active";
   };
 
   const backendOrders = data?.myOrders || [];
-  
+
   const mappedOrders: OrderData[] = backendOrders.map((o: any) => ({
     id: o.id.split("-")[0], // Just display first chunk for cleaner UI
     date: new Date(o.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
@@ -176,7 +173,7 @@ export default function MyOrdersPage() {
                 onClick={() => router.push(`/order/${order.id}`)}
                 style={{ cursor: "pointer" }}
               >
-                
+
                 {/* Header Information */}
                 <div className={styles.cardHeader}>
                   <div className={styles.headerLeft}>

@@ -18,7 +18,7 @@ export default function ShippingAddressesPage() {
     isLoggedIn,
     setLoginModalOpen,
   } = useCart();
-  
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [addressLine1, setAddressLine1] = useState("");
@@ -121,7 +121,7 @@ export default function ShippingAddressesPage() {
 
       <main className={styles.mainContent}>
         <div className={styles.responsiveWrapper}>
-          
+
           {/* List of saved addresses */}
           <div className={styles.listCol}>
             <h3 className={styles.sectionTitle}>Saved Addresses</h3>
@@ -169,7 +169,7 @@ export default function ShippingAddressesPage() {
                   </div>
                 </div>
               ))}
-              
+
               {addresses.length === 0 && (
                 <div className={styles.emptyState}>
                   <p>No shipping addresses saved.</p>
@@ -184,7 +184,7 @@ export default function ShippingAddressesPage() {
             <div className={styles.formCard}>
               <h3 className={styles.formTitle}>Add New Address</h3>
               <form onSubmit={handleAddAddress} className={styles.addressForm}>
-                
+
                 <div className={styles.inputGroup}>
                   <label className={styles.inputLabel}>Receiver Name *</label>
                   <input

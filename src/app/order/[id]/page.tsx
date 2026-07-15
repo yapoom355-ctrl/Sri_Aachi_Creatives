@@ -34,14 +34,14 @@ export default function OrderDetailsPage({ params }: PageProps) {
 
   const steps = isCancelled
     ? [
-        { title: "Order Placed", completed: true },
-        { title: "Cancelled", completed: true, active: true },
-      ]
+      { title: "Order Placed", completed: true },
+      { title: "Cancelled", completed: true, active: true },
+    ]
     : STATUS_STEPS.map((s, idx) => ({
-        title: s.charAt(0) + s.slice(1).toLowerCase(),
-        completed: currentStatusIdx >= idx,
-        active: currentStatusIdx === idx,
-      }));
+      title: s.charAt(0) + s.slice(1).toLowerCase(),
+      completed: currentStatusIdx >= idx,
+      active: currentStatusIdx === idx,
+    }));
 
 
   if (loading) {
@@ -116,24 +116,22 @@ export default function OrderDetailsPage({ params }: PageProps) {
                   <div key={idx} className={styles.stepRow}>
                     <div className={styles.indicatorCol}>
                       <div
-                        className={`${styles.circle} ${
-                          step.completed
+                        className={`${styles.circle} ${step.completed
                             ? step.active
                               ? styles.circleActive
                               : styles.circleCompleted
                             : styles.circlePending
-                        }`}
+                          }`}
                       >
                         {step.completed && !step.active && <Check size={12} strokeWidth={3} />}
                         {step.active && <div className={styles.innerDot} />}
                       </div>
                       {idx < steps.length - 1 && (
                         <div
-                          className={`${styles.line} ${
-                            step.completed && steps[idx + 1]?.completed
+                          className={`${styles.line} ${step.completed && steps[idx + 1]?.completed
                               ? styles.lineCompleted
                               : styles.linePending
-                          }`}
+                            }`}
                         />
                       )}
                     </div>
@@ -155,7 +153,7 @@ export default function OrderDetailsPage({ params }: PageProps) {
                   <div key={idx} className={styles.itemRow}>
                     <div className={styles.itemImageWrapper}>
                       <Image
-                        src={item.product?.thumbnail?.mediaUrl ?? "/images/product-green.png"}
+                        src={item.product?.thumbnail?.mediaUrl ?? "/images/motor-engine-table-3.webp"}
                         alt={item.product?.title ?? "Product"}
                         width={50}
                         height={50}

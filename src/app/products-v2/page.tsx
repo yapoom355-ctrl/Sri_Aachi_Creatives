@@ -41,10 +41,11 @@ export default function ProductsV2Page() {
 
   // Fallback images
   const FALLBACK_IMAGES = [
-    "/images/product-green.png",
-    "/images/product-white.png",
-    "/images/product-brown.png",
-    "/images/product-black.png"
+    "/images/resin-art-block.webp",
+    "/images/resin-table.webp",
+    "/images/photo-frame.webp",
+    "/images/motor-engine-table.webp",
+    "/images/motor-engine-table-3.webp"
   ];
 
   // Map Products

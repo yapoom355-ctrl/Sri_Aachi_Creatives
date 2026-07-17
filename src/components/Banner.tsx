@@ -8,33 +8,11 @@ import { useQuery } from "@apollo/client/react";
 import { GET_PRODUCTS } from "@/graphql/queries";
 import styles from "./Banner.module.css";
 
-const STATIC_SLIDES = [
-  {
-    tag: "New Arrivals",
-    title: (
-      <>
-        Artisan-crafted,
-        <br />
-        <span className={styles.highlight}>timeless</span> pieces
-      </>
-    ),
-    image: "/images/resin-table.webp",
-    link: "/products",
-  }
-];
 
 export default function Banner() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fade, setFade] = useState(true);
   const { data, loading, error } = useQuery<any>(GET_PRODUCTS, { fetchPolicy: "cache-first" });
-
-  const FALLBACK_IMAGES = [
-    "/images/product-green.png",
-    "/images/product-white.png",
-    "/images/product-brown.png",
-    "/images/product-blue.png",
-    "/images/banner-hoodie.png",
-  ];
 
   const dynamicSlides = data?.products?.slice(0, 5).map((p: any, index: number) => ({
     tag: p.categories?.[0]?.title || "Featured",
@@ -43,11 +21,11 @@ export default function Banner() {
         {p.title}
       </span>
     ),
-    image: p.thumbnail?.mediaUrl || FALLBACK_IMAGES[index % FALLBACK_IMAGES.length],
+    image: p.thumbnail?.mediaUrl,
     link: `/product/${p.id}`,
   })) || [];
 
-  const slidesToUse = dynamicSlides.length > 0 ? dynamicSlides : STATIC_SLIDES;
+  const slidesToUse = dynamicSlides;
 
   useEffect(() => {
     if (slidesToUse.length <= 1) return;
@@ -61,7 +39,23 @@ export default function Banner() {
     return () => clearInterval(timer);
   }, [slidesToUse.length]);
 
-  const slide = slidesToUse[currentSlide] || STATIC_SLIDES[0];
+  if (loading) {
+    return (
+      <div className={styles.banner} style={{ animation: "pulse 0.8s infinite" }}>
+        <div className={styles.content} style={{ opacity: 0.5 }}>
+          Loading featured products...
+        </div>
+      </div>
+    );
+  }
+
+  if (slidesToUse.length === 0) {
+    return null;
+  }
+
+
+
+  const slide = slidesToUse[currentSlide] || slidesToUse[0];
 
   return (
     <div className={styles.banner}>
@@ -70,13 +64,13 @@ export default function Banner() {
         style={{
           opacity: fade ? 1 : 0,
           transform: fade ? "translateY(0)" : "translateY(5px)",
-          transition: "opacity 0.3s ease, transform 0.3s ease",
+          transition: "opacity 0.15s ease, transform 0.15s ease",
         }}
       >
         <span className={styles.tagBadge}>{slide.tag}</span>
         <h2 className={styles.title}>{slide.title}</h2>
         <Link href={slide.link} className={styles.shopButton}>
-          <span>{dynamicSlides.length > 0 ? "View Product" : "Explore Collection"}</span>
+          <span>View Product</span>
           <ArrowRight size={14} className={styles.arrowIcon} strokeWidth={2} />
         </Link>
       </div>
@@ -91,7 +85,7 @@ export default function Banner() {
             style={{
               opacity: fade ? 1 : 0,
               transform: fade ? "scale(1)" : "scale(0.95)",
-              transition: "opacity 0.3s ease, transform 0.3s ease",
+              transition: "opacity 0.15s ease, transform 0.15s ease",
             }}
             priority
           />

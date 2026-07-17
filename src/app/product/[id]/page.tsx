@@ -50,13 +50,13 @@ export default function ProductPage({ params }: ProductPageProps) {
         <ProductDetailsHeader />
         <main className={styles.mainContent}>
           <div className={styles.imageBlock}>
-            <div className={styles.imageCard} style={{ background: "#f0f0f0", height: "420px", width: "100%", borderRadius: "20px", animation: "pulse 1.5s infinite" }} />
+            <div className={styles.imageCard} style={{ background: "#f0f0f0", height: "420px", width: "100%", borderRadius: "20px", animation: "pulse 0.8s infinite" }} />
           </div>
           <div className={styles.infoBlock}>
-            <div style={{ background: "#f0f0f0", height: "32px", width: "70%", marginBottom: "1rem", borderRadius: "8px", animation: "pulse 1.5s infinite" }} />
-            <div style={{ background: "#f0f0f0", height: "24px", width: "30%", marginBottom: "2rem", borderRadius: "8px", animation: "pulse 1.5s infinite" }} />
-            <div style={{ background: "#f0f0f0", height: "100px", width: "100%", marginBottom: "2rem", borderRadius: "8px", animation: "pulse 1.5s infinite" }} />
-            <div style={{ background: "#f0f0f0", height: "50px", width: "100%", borderRadius: "8px", animation: "pulse 1.5s infinite" }} />
+            <div style={{ background: "#f0f0f0", height: "32px", width: "70%", marginBottom: "1rem", borderRadius: "8px", animation: "pulse 0.8s infinite" }} />
+            <div style={{ background: "#f0f0f0", height: "24px", width: "30%", marginBottom: "2rem", borderRadius: "8px", animation: "pulse 0.8s infinite" }} />
+            <div style={{ background: "#f0f0f0", height: "100px", width: "100%", marginBottom: "2rem", borderRadius: "8px", animation: "pulse 0.8s infinite" }} />
+            <div style={{ background: "#f0f0f0", height: "50px", width: "100%", borderRadius: "8px", animation: "pulse 0.8s infinite" }} />
           </div>
         </main>
       </div>

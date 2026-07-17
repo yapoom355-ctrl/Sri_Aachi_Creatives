@@ -5,7 +5,7 @@
   border-radius: 26px;
   background: var(--accent-gradient);
   overflow: hidden;
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 0.15s ease;
   border: none;
   box-shadow: 0 6px 20px rgba(164, 116, 73, 0.35);
 }

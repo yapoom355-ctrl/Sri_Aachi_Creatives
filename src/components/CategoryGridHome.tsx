@@ -31,7 +31,6 @@ export default function CategoryGridHome() {
     id: c.id,
     name: c.title,
     image: c.thumbnail?.mediaUrl,
-    count: "Explore",
     gradient: getGradient(c.id),
   })) || [], [data]);
 
@@ -69,7 +68,6 @@ export default function CategoryGridHome() {
             
             <div className={styles.info}>
               <h3 className={styles.name}>{category.name}</h3>
-              <span className={styles.count}>{category.count}</span>
             </div>
 
             <div className={styles.arrowButton}>

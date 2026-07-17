@@ -46,24 +46,12 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
     toggleWishlist(product.id);
   };
 
-  const handleNavigate = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const doc = document as any;
-    if (doc.startViewTransition) {
-      doc.startViewTransition(() => {
-        router.push(`/product/${product.id}`);
-      });
-    } else {
-      router.push(`/product/${product.id}`);
-    }
-  };
 
   return (
     <div className={styles.card}>
       <Link 
         href={`/product/${product.id}`} 
         className={styles.cardLink}
-        onClick={handleNavigate}
       >
         <div className={styles.imageWrapper}>
           <Image

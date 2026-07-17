@@ -31,7 +31,6 @@ export default function AllCategoriesPage() {
     id: c.id,
     name: c.title,
     image: c.thumbnail?.mediaUrl,
-    count: "Explore",
   })) || [], [data]);
 
   const handleCategorySelect = (id: string) => {
@@ -66,7 +65,6 @@ export default function AllCategoriesPage() {
                 
                 <div className={styles.info}>
                   <h3 className={styles.name}>{category.name}</h3>
-                  <span className={styles.count}>{category.count}</span>
                 </div>
 
                 <div className={styles.arrowButton}>

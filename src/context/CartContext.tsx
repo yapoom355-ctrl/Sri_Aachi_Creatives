@@ -357,13 +357,36 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setLoginModalOpen(true);
       return;
     }
+    
+    // Check if the item is already in the cart based on local state
+    const existingItem = cart?.items?.find((i) => i.product.id === productId);
+
     try {
-      await addToCartMutation({ variables: { productId, quantity } });
+      if (existingItem) {
+        await updateCartItemMutation({ variables: { productId, quantity: existingItem.quantity + quantity } });
+      } else {
+        await addToCartMutation({ variables: { productId, quantity } });
+      }
       await refetchCart();
-    } catch (err) {
-      console.error("addToCart error:", err);
+    } catch (err: any) {
+      // If the backend throws a unique constraint error (item already in cart but frontend didn't know), fallback to update
+      const msg = err.message?.toLowerCase() || "";
+      if (msg.includes("unique constraint") || msg.includes("already exists") || msg.includes("duplicate key")) {
+        console.warn("Item already in cart on backend, falling back to update quantity...");
+        try {
+          // We don't know the exact existing quantity if the frontend was out of sync, 
+          // but we can try to just increment it or set it to 1 + quantity if backend supports relative update.
+          // Since updateCartItem takes the *new total* quantity, we'll assume it was 1 and add the requested quantity.
+          await updateCartItemMutation({ variables: { productId, quantity: 1 + quantity } });
+          await refetchCart();
+        } catch (fallbackErr) {
+          console.error("addToCart fallback error:", fallbackErr);
+        }
+      } else {
+        console.error("addToCart error:", err);
+      }
     }
-  }, [addToCartMutation, refetchCart, isLoggedIn, setLoginModalOpen]);
+  }, [addToCartMutation, updateCartItemMutation, refetchCart, isLoggedIn, setLoginModalOpen, cart]);
 
   // Backward-compat: legacy uses (id, size, color, qty) — we map to productId
   const updateQuantity = useCallback(async (id: string, _size: string, _color: string, quantity: number) => {

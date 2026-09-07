@@ -1,5 +1,5 @@
 const query = `query { categories { id title } products { id title categories { id title } } }`;
-fetch('https://gubera-2-0-backend-fastapi-graphql.vercel.app/graphql', {
+fetch('https://sriaachicreatives.udayamarketing.in/graphql/', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',

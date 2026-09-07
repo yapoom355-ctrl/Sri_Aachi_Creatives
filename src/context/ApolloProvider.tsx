@@ -5,6 +5,8 @@ import {
   ApolloClient,
   InMemoryCache,
   createHttpLink,
+  ApolloLink,
+  Observable,
   from,
 } from "@apollo/client";
 import { ApolloProvider as Provider } from "@apollo/client/react";
@@ -14,57 +16,101 @@ import { onError } from "@apollo/client/link/error";
 const httpLink = createHttpLink({
   uri:
     process.env.NEXT_PUBLIC_GRAPHQL_URL ||
-    "https://gubera-2-0-backend-fastapi-graphql.vercel.app/graphql",
+    "https://sriaachicreatives.udayamarketing.in/graphql/",
 });
 
-// Attach x-tenant-id and Bearer token (only when token exists)
+// Attach Bearer token when token exists in localStorage
 const authLink = setContext((_, { headers }) => {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
+  // Only attach valid JWT tokens (skip mock/session tokens)
+  const isValidJwt =
+    Boolean(token) &&
+    !token?.startsWith("session-auth-") &&
+    token?.split(".").length === 3;
+
   return {
     headers: {
       ...headers,
-      "x-tenant-id":
-        process.env.NEXT_PUBLIC_TENANT_ID ||
-        "4c7b9c85-0963-49ba-bd2f-7776a0be4b71",
-      // Never send authorization header with empty/null value — backend treats it as invalid
-      ...(token ? { authorization: `Bearer ${token}` } : {}),
+      ...(isValidJwt ? { authorization: `JWT ${token}` } : {}),
     },
   };
 });
 
-// Intercept auth errors: if the backend says token is invalid, clear it so
-// subsequent requests (products, categories, etc.) work without the bad token.
+// Intercept auth errors
 const errorLink = onError((errorObj: any) => {
   const { graphQLErrors } = errorObj;
   if (graphQLErrors) {
     for (const err of graphQLErrors) {
       const msg: string = err.message || "";
-      const isAuthError =
-        msg.toLowerCase().includes("invalid token") ||
-        msg.toLowerCase().includes("token format") ||
-        msg.toLowerCase().includes("not authenticated") ||
-        msg.toLowerCase().includes("unauthorized") ||
-        msg.toLowerCase().includes("different tenant");
+      const lmsg = msg.toLowerCase();
 
-      if (isAuthError && typeof window !== "undefined") {
-        // Clear the bad token so future requests go through cleanly
-        localStorage.removeItem("token");
-        console.warn("[Apollo] Cleared invalid/expired auth token:", msg);
+      // Saleor permission errors (user not logged in visiting protected pages)
+      // Suppress these silently — the UI handles the empty state
+      if (
+        lmsg.includes("authenticated_user") ||
+        lmsg.includes("authenticated_app") ||
+        lmsg.includes("you need one of the following permissions") ||
+        lmsg.includes("permission denied")
+      ) {
+        console.warn("[Apollo] Protected query called without auth. User needs to log in.");
+        return; // suppress — don't crash the app
+      }
+
+      // Clear bad / expired tokens
+      if (
+        lmsg.includes("invalid token") ||
+        lmsg.includes("token format") ||
+        lmsg.includes("signature has expired") ||
+        lmsg.includes("not authenticated") ||
+        lmsg.includes("unauthorized")
+      ) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token");
+          console.warn("[Apollo] Cleared invalid/expired auth token:", msg);
+        }
       }
     }
   }
 });
 
+// Real-time console logger for all GraphQL requests & responses
+const loggerLink = new ApolloLink((operation, forward) => {
+  const opName = operation.operationName || "GraphQL Operation";
+  console.log(
+    `%c📡 [GraphQL Sent] %c${opName} %c-> https://sriaachicreatives.udayamarketing.in/graphql/`,
+    "color: #3b82f6; font-weight: bold",
+    "color: #10b981; font-weight: bold",
+    "color: #6b7280",
+    operation.variables
+  );
+
+  return new Observable((observer) => {
+    const handle = forward(operation).subscribe({
+      next: (response: any) => {
+        if (response.errors) {
+          console.warn(`❌ [GraphQL Error] ${opName}:`, response.errors);
+        } else {
+          console.log(`✅ [GraphQL Received] ${opName}:`, response.data);
+        }
+        observer.next(response);
+      },
+      error: (err: any) => observer.error(err),
+      complete: () => observer.complete(),
+    });
+    return () => handle.unsubscribe();
+  });
+});
+
 const client = new ApolloClient({
-  link: from([errorLink, authLink, httpLink]),
+  link: from([errorLink, loggerLink, authLink, httpLink]),
   cache: new InMemoryCache({
     typePolicies: {
       Query: {
         fields: {
           products: {
-            keyArgs: ["productType", "search"],
+            keyArgs: ["channel", "search", "filter"],
           },
           categories: {
             keyArgs: ["search"],

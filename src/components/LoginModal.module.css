@@ -235,8 +235,15 @@
 }
 
 .otpInput:focus {
-  border-color: var(--text-primary);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(164, 116, 73, 0.12);
+  transform: scale(1.05);
+}
+
+.otpFilled {
+  border-color: var(--accent) !important;
+  background-color: rgba(164, 116, 73, 0.06);
+  color: var(--accent);
 }
 
 .timerRow {

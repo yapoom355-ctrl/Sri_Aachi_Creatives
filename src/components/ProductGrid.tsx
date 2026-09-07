@@ -6,6 +6,7 @@ import ProductCard from "./ProductCard";
 import styles from "./ProductGrid.module.css";
 import { GET_PRODUCTS } from "@/graphql/queries";
 import { useCart } from "@/context/CartContext";
+import { resolveProductImage } from "@/utils/productImages";
 
 export default function ProductGrid({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
   const { wishlist } = useCart();
@@ -13,21 +14,6 @@ export default function ProductGrid({ wishlistOnly = false }: { wishlistOnly?: b
     fetchPolicy: "cache-and-network",
     errorPolicy: "all",
   }) as any;
-
-  const FALLBACK_IMAGES = [
-    "/images/resin-art-block.webp",
-    "/images/resin-table.webp",
-    "/images/photo-frame.webp",
-    "/images/motor-engine-table.webp",
-    "/images/motor-engine-table-3.webp",
-  ];
-
-  const getProductImage = (thumbnailUrl?: string | null, id?: string, index: number = 0) => {
-    if (thumbnailUrl) {
-      return thumbnailUrl;
-    }
-    return FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
-  };
 
   if (loading && !data) {
     return (
@@ -50,23 +36,30 @@ export default function ProductGrid({ wishlistOnly = false }: { wishlistOnly?: b
     );
   }
 
-  let products = data?.products?.map((p: any, index: number) => ({
-    id: p.id,
-    name: p.title,
-    subtitle: p.subtitle || "",
-    description: p.description || "",
-    price: `₹${p.effectivePrice ?? p.price ?? 0}`,
-    numericPrice: p.effectivePrice ?? p.price ?? 0,
-    image: getProductImage(p.thumbnail?.mediaUrl, p.id, index),
-    category: p.categories?.[0]?.id || "",
-    categoryName: p.categories?.[0]?.title || "",
-    isLiked: false,
-    rating: 5.0,
-    reviewsCount: 0,
-    colors: ["#768067", "#c08457"],
-    sizes: ["M", "L"],
-    limited: false,
-  })) || [];
+  const rawProducts =
+    data?.products?.edges?.map((e: any) => e.node) ||
+    (Array.isArray(data?.products) ? data.products : []);
+
+  let products = rawProducts.map((p: any) => {
+    const grossPrice = p.pricing?.priceRange?.start?.gross?.amount ?? p.effectivePrice ?? p.price ?? 0;
+    const thumb = p.thumbnail?.url || p.thumbnail?.mediaUrl;
+    return {
+      id: p.id,
+      variantId: p.variants?.[0]?.id,
+      name: p.name || p.title || "Product",
+      subtitle: p.subtitle || p.category?.name || "",
+      description: p.description || "",
+      price: `₹${grossPrice}`,
+      numericPrice: Number(grossPrice),
+      image: resolveProductImage(thumb, `${p.name} ${p.slug}`, p.id),
+      category: p.category?.id || p.categories?.[0]?.id || "",
+      categoryName: p.category?.name || p.categories?.[0]?.title || "",
+      isLiked: wishlist ? wishlist.includes(p.id) : false,
+      colors: ["#768067", "#c08457"],
+      sizes: ["M", "L"],
+      limited: false,
+    };
+  });
 
   if (wishlistOnly) {
     products = products.filter((product: any) => wishlist.includes(product.id));

@@ -6,28 +6,32 @@ import { Home, ShoppingCart, Heart, User, LayoutGrid } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import styles from "./BottomNav.module.css";
 
-// CONFIGURATION TOGGLE:
-// - Set to 'true' to use ONLY bottom navigation on all screen sizes.
-// - Set to 'false' to use bottom navigation on mobile and top navigation on web/tablet.
-export const FORCE_BOTTOM_NAV = false;
+export const FORCE_BOTTOM_NAV = true;
 
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
-  const { setSidebarOpen, setWishlistSidebarOpen } = useCart();
+  const {
+    cartCount,
+    setSidebarOpen,
+    wishlist,
+    setWishlistSidebarOpen,
+    isLoggedIn,
+    setLoginModalOpen,
+  } = useCart();
 
   useEffect(() => {
-    if (FORCE_BOTTOM_NAV) {
-      document.body.classList.add("forced-bottom-nav");
-    } else {
+    document.body.classList.add("forced-bottom-nav");
+    return () => {
       document.body.classList.remove("forced-bottom-nav");
-    }
+    };
   }, []);
 
   const getActiveTab = () => {
     if (pathname === "/") return "home";
     if (pathname?.startsWith("/categories")) return "categories";
     if (pathname === "/cart") return "cart";
+    if (pathname?.startsWith("/wishlist")) return "wishlist";
     if (
       pathname?.startsWith("/profile") ||
       pathname?.startsWith("/orders") ||
@@ -36,11 +40,6 @@ export default function BottomNav() {
       pathname?.startsWith("/coupons")
     ) {
       return "profile";
-    }
-    if (
-      pathname?.startsWith("/wishlist")
-    ) {
-      return "favorites";
     }
     return "home";
   };
@@ -51,6 +50,10 @@ export default function BottomNav() {
     router.push("/");
   };
 
+  const handleCategoriesClick = () => {
+    router.push("/categories");
+  };
+
   const handleCartClick = () => {
     if (window.innerWidth < 768) {
       router.push("/cart");
@@ -59,75 +62,77 @@ export default function BottomNav() {
     }
   };
 
-  const handleCategoriesClick = () => {
-    router.push("/categories");
+  const handleWishlistClick = () => {
+    if (window.innerWidth < 768) {
+      router.push("/wishlist");
+    } else {
+      setWishlistSidebarOpen(true);
+    }
   };
 
   const handleProfileClick = () => {
-    router.push("/profile");
+    if (isLoggedIn) {
+      router.push("/profile");
+    } else {
+      setLoginModalOpen(true);
+    }
   };
 
   return (
-    <div
-      className={`${styles.navContainer} ${FORCE_BOTTOM_NAV ? styles.forceBottom : ""}`}
-    >
-      <nav
-        className={`${styles.navBar} ${FORCE_BOTTOM_NAV ? styles.forceBottomBar : ""}`}
-      >
-        {/* Home Tab */}
+    <div className={styles.navContainer}>
+      <nav className={styles.navBar} aria-label="Bottom Navigation">
+        {/* 1. Home Tab */}
         <button
           className={`${styles.navItem} ${activeTab === "home" ? styles.activeItem : styles.inactiveItem}`}
           onClick={handleHomeClick}
           aria-label="Home"
+          title="Home"
         >
-          <Home size={18} strokeWidth={2.5} />
-          <span className={styles.navText}>Home</span>
+          <Home size={20} strokeWidth={activeTab === "home" ? 2.5 : 2} />
         </button>
 
-        {/* Categories Tab */}
+        {/* 2. Categories Tab */}
         <button
           className={`${styles.navItem} ${activeTab === "categories" ? styles.activeItem : styles.inactiveItem}`}
           onClick={handleCategoriesClick}
           aria-label="Categories"
+          title="Categories"
         >
-          <LayoutGrid size={18} strokeWidth={2.5} />
-          <span className={styles.navText}>Categories</span>
+          <LayoutGrid size={20} strokeWidth={activeTab === "categories" ? 2.5 : 2} />
         </button>
 
-        {/* Cart Tab */}
+        {/* 3. Cart Tab */}
         <button
           className={`${styles.navItem} ${activeTab === "cart" ? styles.activeItem : styles.inactiveItem}`}
           onClick={handleCartClick}
           aria-label="Cart"
+          title="Cart"
         >
-          <ShoppingCart size={18} strokeWidth={2.5} />
-          <span className={styles.navText}>Cart</span>
+          <ShoppingCart size={20} strokeWidth={activeTab === "cart" ? 2.5 : 2} />
+          {cartCount > 0 && <span className={styles.badge}>{cartCount}</span>}
         </button>
 
-        {/* Favorites Tab */}
+        {/* 4. Wishlist Tab */}
         <button
-          className={`${styles.navItem} ${activeTab === "favorites" ? styles.activeItem : styles.inactiveItem}`}
-          onClick={() => {
-            if (window.innerWidth < 768) {
-              router.push("/wishlist");
-            } else {
-              setWishlistSidebarOpen(true);
-            }
-          }}
+          className={`${styles.navItem} ${activeTab === "wishlist" ? styles.activeItem : styles.inactiveItem}`}
+          onClick={handleWishlistClick}
           aria-label="Wishlist"
+          title="Wishlist"
         >
-          <Heart size={18} strokeWidth={2.5} />
-          <span className={styles.navText}>Wishlist</span>
+          <Heart size={20} strokeWidth={activeTab === "wishlist" ? 2.5 : 2} />
+          {wishlist.length > 0 && (
+            <span className={styles.badge}>{wishlist.length}</span>
+          )}
         </button>
 
-        {/* Profile Tab */}
+        {/* 5. Profile Tab */}
         <button
           className={`${styles.navItem} ${activeTab === "profile" ? styles.activeItem : styles.inactiveItem}`}
           onClick={handleProfileClick}
           aria-label="Profile"
+          title="Profile"
         >
-          <User size={18} strokeWidth={2.5} />
-          <span className={styles.navText}>Profile</span>
+          <User size={20} strokeWidth={activeTab === "profile" ? 2.5 : 2} />
         </button>
       </nav>
     </div>

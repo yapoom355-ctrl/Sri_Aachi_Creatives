@@ -1,31 +1,77 @@
 "use client";
 
 import React from "react";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, ShoppingBag } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import styles from "./DetailsAddToCart.module.css";
 
 interface DetailsAddToCartProps {
   productId: string;
+  variantId?: string;
+  customInstructions?: string;
+  customImage?: string;
+  customImageName?: string;
+  itemDetails?: {
+    name?: string;
+    subtitle?: string;
+    price?: string;
+    numericPrice?: number;
+    image?: string;
+  };
 }
 
-export default function DetailsAddToCart({ productId }: DetailsAddToCartProps) {
+export default function DetailsAddToCart({
+  productId,
+  variantId,
+  customInstructions,
+  customImage,
+  customImageName,
+  itemDetails,
+}: DetailsAddToCartProps) {
   const { addToCart, cartItems, updateQuantity } = useCart();
 
-  const cartItem = cartItems.find((i) => i.id === productId);
+  const trimmedInstructions = customInstructions?.trim() || "";
+  const activeImage = customImage || "";
+
+  const cartItem = cartItems.find(
+    (i) =>
+      i.id === productId &&
+      (i.customInstructions || "") === trimmedInstructions &&
+      (i.customImage || "") === activeImage
+  );
   const quantity = cartItem ? cartItem.quantity : 0;
 
   const handleIncrement = () => {
     if (quantity === 0) {
-      addToCart(productId, 1);
+      addToCart(productId, 1, {
+        ...itemDetails,
+        variantId: variantId || undefined,
+        customInstructions: trimmedInstructions || undefined,
+        customImage: activeImage || undefined,
+        customImageName: customImageName || undefined,
+      });
     } else {
-      updateQuantity(productId, "M", "#000", quantity + 1);
+      updateQuantity(
+        productId,
+        "M",
+        "#000",
+        quantity + 1,
+        trimmedInstructions,
+        activeImage
+      );
     }
   };
 
   const handleDecrement = () => {
     if (quantity > 0) {
-      updateQuantity(productId, "M", "#000", quantity - 1);
+      updateQuantity(
+        productId,
+        "M",
+        "#000",
+        quantity - 1,
+        trimmedInstructions,
+        activeImage
+      );
     }
   };
 
@@ -41,6 +87,7 @@ export default function DetailsAddToCart({ productId }: DetailsAddToCartProps) {
           transform: quantity === 0 ? "scale(1)" : "scale(0.95)",
         }}
       >
+        <ShoppingBag size={18} style={{ marginRight: "8px", verticalAlign: "middle" }} />
         Add to Cart
       </button>
 
@@ -53,11 +100,19 @@ export default function DetailsAddToCart({ productId }: DetailsAddToCartProps) {
           transform: quantity > 0 ? "scale(1)" : "scale(1.05)",
         }}
       >
-        <button className={styles.qtyButton} onClick={handleDecrement} aria-label="Decrease quantity">
+        <button
+          className={styles.qtyButton}
+          onClick={handleDecrement}
+          aria-label="Decrease quantity"
+        >
           <Minus size={16} strokeWidth={2.5} />
         </button>
         <span className={styles.quantityText}>{quantity}</span>
-        <button className={styles.qtyButton} onClick={handleIncrement} aria-label="Increase quantity">
+        <button
+          className={styles.qtyButton}
+          onClick={handleIncrement}
+          aria-label="Increase quantity"
+        >
           <Plus size={16} strokeWidth={2.5} />
         </button>
       </div>

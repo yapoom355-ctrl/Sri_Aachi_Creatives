@@ -3,7 +3,7 @@ const fetch = require('node-fetch');
 
 async function testProductsNoAuth() {
   const query = `query { products { id title price } }`;
-  const res = await fetch('https://gubera-2-0-backend-fastapi-graphql.vercel.app/graphql', {
+  const res = await fetch('https://sriaachicreatives.udayamarketing.in/graphql/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -19,7 +19,7 @@ async function testProductsNoAuth() {
 
 async function testProductsEmptyAuth() {
   const query = `query { products { id title price } }`;
-  const res = await fetch('https://gubera-2-0-backend-fastapi-graphql.vercel.app/graphql', {
+  const res = await fetch('https://sriaachicreatives.udayamarketing.in/graphql/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

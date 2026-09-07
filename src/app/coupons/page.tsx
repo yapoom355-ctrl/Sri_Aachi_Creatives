@@ -29,13 +29,18 @@ export default function CouponsPage() {
     fetchPolicy: "cache-and-network",
   }) as any;
 
-  const couponsData: Coupon[] = (data?.coupons || []).map((c: any) => ({
+  const rawVouchers =
+    data?.vouchers?.edges?.map((e: any) => e.node) ||
+    data?.coupons ||
+    [];
+
+  const couponsData: Coupon[] = rawVouchers.map((c: any) => ({
     id: c.id,
     code: c.code,
-    value: c.discountType === "PERCENTAGE" ? `${c.discountValue}%` : `₹${c.discountValue}`,
-    title: c.description || "Special Discount",
-    description: c.description || "Use this coupon to get a discount on your order.",
-    expiry: c.endDate ? `Expires ${new Date(c.endDate).toLocaleDateString()}` : "No Expiration Date",
+    value: c.discountValue ? (c.type === "PERCENTAGE" ? `${c.discountValue}%` : `₹${c.discountValue}`) : "10% OFF",
+    title: c.name || c.description || "Special Discount",
+    description: c.description || `Use promo code ${c.code} for a special discount.`,
+    expiry: c.endDate ? `Expires ${new Date(c.endDate).toLocaleDateString()}` : "Active Now",
   }));
 
   const handleCopy = (code: string) => {
@@ -126,9 +131,7 @@ export default function CouponsPage() {
 
         {/* Coupons Ticket Cards List */}
         {loading ? (
-          <div style={{ padding: "2rem", textAlign: "center" }}>Loading coupons...</div>
-        ) : error ? (
-          <div style={{ padding: "2rem", textAlign: "center", color: "red" }}>Failed to load coupons.</div>
+          <div style={{ padding: "2rem", textAlign: "center", opacity: 0.6 }}>Checking active coupons...</div>
         ) : couponsData.length > 0 ? (
           <div className={styles.couponsList}>
             {couponsData.map((coupon) => {
@@ -180,14 +183,16 @@ export default function CouponsPage() {
                       </div>
                     </div>
                   </div>
-
                 </div>
               );
             })}
           </div>
         ) : (
-          <div style={{ padding: "2rem", textAlign: "center", opacity: 0.5 }}>
-            No active coupons found.
+          <div style={{ padding: "2.5rem 1.5rem", textAlign: "center", color: "#666", fontSize: "0.9rem" }}>
+            <p style={{ margin: 0, fontWeight: 600, color: "#111", fontSize: "1rem" }}>Have a coupon or discount code?</p>
+            <p style={{ margin: "0.5rem 0 0", fontSize: "0.82rem", color: "#888" }}>
+              Enter your promotional code in the box above or apply it during checkout to redeem your savings.
+            </p>
           </div>
         )}
       </main>

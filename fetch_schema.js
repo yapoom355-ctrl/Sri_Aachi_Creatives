@@ -96,7 +96,7 @@ async function fetchSchema() {
   `;
 
   try {
-    const res = await fetch('https://gubera-2-0-backend-fastapi-graphql.vercel.app/graphql', {
+    const res = await fetch('https://sriaachicreatives.udayamarketing.in/graphql/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query })

@@ -124,29 +124,219 @@
   color: var(--text-secondary);
 }
 
+.customizationCard {
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  transition: border-color 0.2s ease;
+}
+
+:global(.dark) .customizationCard {
+  background: #18181b;
+  border-color: #27272a;
+}
+
+.customizationHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.customizationTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
+
+.customizationBadge {
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  letter-spacing: 0.2px;
+}
+
+:global(.dark) .customizationBadge {
+  background: #312e81;
+  color: #c7d2fe;
+}
+
+.customFieldGroup {
+  margin-bottom: 14px;
+}
+
+.customFieldLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.customTextInput {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: #ffffff;
+  outline: none;
+  transition: all 0.2s ease;
+  resize: vertical;
+  min-height: 52px;
+}
+
+:global(.dark) .customTextInput {
+  background: #27272a;
+  border-color: #3f3f46;
+  color: #f4f4f5;
+}
+
+.customTextInput:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.uploadDropzone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+:global(.dark) .uploadDropzone {
+  background: #27272a;
+  border-color: #3f3f46;
+}
+
+.uploadDropzone:hover {
+  border-color: #6366f1;
+  background: #f8fafc;
+}
+
+:global(.dark) .uploadDropzone:hover {
+  background: #1f1f23;
+}
+
+.uploadDropzoneContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.uploadMainText {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.uploadSubText {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.previewContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 8px 12px;
+}
+
+:global(.dark) .previewContainer {
+  background: #27272a;
+  border-color: #3f3f46;
+}
+
+.previewLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.previewThumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e2e8f0;
+}
+
+.previewInfo {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.previewName {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.previewStatus {
+  font-size: 11px;
+  color: #10b981;
+  font-weight: 500;
+}
+
+.removeImageBtn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.removeImageBtn:hover {
+  background: #fee2e2;
+}
+
+:global(.dark) .removeImageBtn:hover {
+  background: #451a1a;
+}
+
+.customizationHelper {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 10px;
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
 .actionContainer {
   width: 100%;
-}
-
-.addToCartButton {
-  width: 100%;
-  height: 52px;
-  border-radius: 26px;
-  background-color: var(--foreground);
-  color: var(--background);
-  font-size: 15px;
-  font-weight: 700;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s ease, opacity 0.2s ease;
-}
-
-.addToCartButton:hover {
-  transform: translateY(-1px);
-}
-
-.addToCartButton:active {
-  transform: translateY(0);
-  opacity: 0.9;
 }
 
 /* Tablet & Web viewports */

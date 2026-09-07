@@ -3,10 +3,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useMutation } from "@apollo/client/react";
 import { useCart } from "@/context/CartContext";
-import { SEND_OTP, LOGIN_WITH_OTP } from "@/graphql/mutations";
-import { X, Phone, KeyRound, ChevronRight, Check, Loader2 } from "lucide-react";
+import { X, Phone, Check, ChevronRight, Loader2, ArrowLeft } from "lucide-react";
 import styles from "./LoginModal.module.css";
 
 export default function LoginModal() {
@@ -17,7 +15,8 @@ export default function LoginModal() {
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [countdown, setCountdown] = useState(59);
-  const [devOtp, setDevOtp] = useState<string | null>(null); // show OTP from backend in dev
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
 
   const otpRefs = [
     useRef<HTMLInputElement>(null),
@@ -28,10 +27,7 @@ export default function LoginModal() {
     useRef<HTMLInputElement>(null),
   ];
 
-  const [sendOtpMutation, { loading: sendingOtp }] = useMutation<any>(SEND_OTP);
-  const [loginWithOtpMutation, { loading: verifyingOtp }] = useMutation<any>(LOGIN_WITH_OTP);
-
-  // Countdown for resend
+  // Countdown timer for resend
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (step === 2 && countdown > 0) {
@@ -42,49 +38,60 @@ export default function LoginModal() {
 
   if (!isLoginModalOpen) return null;
 
-  const cleanPhone = phoneNumber.replace(/\D/g, "");
-  // Backend SMS integration expects the 10-digit number without the +91 prefix
-  const fullMobile = cleanPhone;
+  const cleanPhone = phoneNumber.replace(/\D/g, "").slice(-10);
+  const fullPhone = `+91${cleanPhone}`;
+  const formattedPhone = cleanPhone.length === 10
+    ? `${cleanPhone.slice(0, 5)} ${cleanPhone.slice(5)}`
+    : cleanPhone;
 
+  // ── Step 1: Send OTP ──────────────────────────────────────────────────────
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccessMsg("");
-    if (cleanPhone.length < 10) {
-      setError("Please enter a valid 10-digit phone number.");
+
+    if (cleanPhone.length !== 10) {
+      setError("Please enter a valid 10-digit mobile number.");
       return;
     }
 
-    try {
-      const result = await sendOtpMutation({ variables: { mobilenumber: fullMobile } });
-      const sendResult = result.data?.sendOtp;
+    setSendingOtp(true);
 
-      if (sendResult?.success === false) {
-        setError(sendResult?.message || "Failed to send OTP. Please try again.");
+    try {
+      const res = await fetch("/api/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: cleanPhone }),
+      });
+
+      const resData = await res.json();
+
+      if (!res.ok || !resData.success) {
+        setError(resData.message || "Failed to send OTP. Please try again.");
         return;
       }
 
-      // Backend returns otp in dev/test mode — show it for testing convenience
-      if (sendResult?.otp) {
-        setDevOtp(sendResult.otp);
-      }
-
+      // OTP sent successfully
       setStep(2);
       setCountdown(59);
-      setSuccessMsg("OTP sent successfully!");
+      setSuccessMsg(`OTP sent to +91 ${formattedPhone}`);
     } catch (err: any) {
-      const msg = err?.graphQLErrors?.[0]?.message || err?.message || "Failed to send OTP.";
-      setError(msg);
+      setError(err?.message || "Failed to send OTP. Please try again.");
+    } finally {
+      setSendingOtp(false);
     }
   };
 
+  // ── OTP input helpers ─────────────────────────────────────────────────────
   const handleOtpChange = (index: number, value: string) => {
     setError("");
     const newVal = value.replace(/\D/g, "");
     const updated = [...otp];
     updated[index] = newVal.substring(newVal.length - 1);
     setOtp(updated);
-    if (newVal && index < 5) otpRefs[index + 1].current?.focus();
+    if (newVal && index < 5) {
+      otpRefs[index + 1].current?.focus();
+    }
   };
 
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -93,68 +100,97 @@ export default function LoginModal() {
     }
   };
 
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pasted) return;
+    const updated = [...otp];
+    for (let i = 0; i < pasted.length; i++) updated[i] = pasted[i];
+    setOtp(updated);
+    otpRefs[Math.min(pasted.length, 5)].current?.focus();
+  };
+
+  // ── Step 2: Verify OTP ────────────────────────────────────────────────────
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     const code = otp.join("");
+
     if (code.length < 6) {
-      setError("Please enter all 6 digits of the OTP.");
+      setError("Please enter the 6-digit OTP received.");
       return;
     }
 
+    setVerifyingOtp(true);
+
     try {
-      const result = await loginWithOtpMutation({
-        variables: { mobilenumber: fullMobile, otp: code },
+      const res = await fetch("/api/otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: cleanPhone, otp: code }),
       });
 
-      const payload = result.data?.loginWithOtp;
-      const accessToken: string = payload?.tokens?.accessToken;
-      const userData = payload?.user;
+      const resData = await res.json();
 
-      if (!accessToken) {
-        setError("Login failed. Invalid OTP.");
+      if (!res.ok || !resData.success) {
+        setError(resData.message || "Verification failed. Please try again.");
         return;
       }
 
-      // Persist token and update cart context
-      const backendName = userData?.name || "";
-      const userName = backendName || userData?.mobilenumber || "User";
-      login(accessToken, {
-        name: userName,
-        email: userData?.email || "",
-        phone: userData?.mobilenumber || fullMobile,
-        avatar: "/images/profile.png",
-      });
+      const token = resData.token;
+      const user = resData.user;
 
-      // Show welcome back message if it's likely an existing user
-      if (backendName && backendName.trim() !== "") {
-        setSuccessMsg(`Welcome back, ${backendName}!`);
+      if (token) {
+        const userName = user?.firstName
+          ? `${user.firstName} ${user.lastName || ""}`.trim()
+          : `User ${cleanPhone.slice(-4)}`;
+
+        login(token, {
+          name: userName,
+          email: user?.email || `91${cleanPhone}@sriaachicreatives.in`,
+          phone: fullPhone,
+          avatar: "/images/profile.png",
+        });
+
+        setSuccessMsg(`Welcome, ${userName}! 🎉`);
+        setTimeout(() => {
+          setLoginModalOpen(false);
+          resetState();
+        }, 800);
       } else {
-        setSuccessMsg("Welcome back! Logged in successfully.");
+        setError("Verification succeeded but no session token was returned.");
       }
-
-      // Wait a moment so the user sees the success message
-      setTimeout(() => {
-        setLoginModalOpen(false);
-        resetState();
-      }, 1500);
     } catch (err: any) {
-      const msg = err?.graphQLErrors?.[0]?.message || err?.message || "Invalid OTP. Please try again.";
-      setError(msg);
+      setError(err?.message || "Verification failed. Please try again.");
+    } finally {
+      setVerifyingOtp(false);
     }
   };
 
+  // ── Resend OTP ─────────────────────────────────────────────────────────────
   const handleResendOtp = async () => {
     setError("");
     setSuccessMsg("");
+    setSendingOtp(true);
     try {
-      const result = await sendOtpMutation({ variables: { mobilenumber: fullMobile } });
-      const sendResult = result.data?.sendOtp;
-      if (sendResult?.otp) setDevOtp(sendResult.otp);
+      const res = await fetch("/api/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: cleanPhone }),
+      });
+
+      const resData = await res.json();
+      if (!res.ok || !resData.success) {
+        setError(resData.message || "Failed to resend OTP.");
+        return;
+      }
+
       setCountdown(59);
-      setSuccessMsg("OTP resent!");
+      setSuccessMsg(`OTP resent successfully!`);
     } catch (err: any) {
-      setError("Failed to resend OTP.");
+      setError(err?.message || "Failed to resend OTP.");
+    } finally {
+      setSendingOtp(false);
     }
   };
 
@@ -164,12 +200,13 @@ export default function LoginModal() {
     setOtp(["", "", "", "", "", ""]);
     setError("");
     setSuccessMsg("");
-    setDevOtp(null);
   };
 
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className={styles.overlay} onClick={() => setLoginModalOpen(false)}>
+    <div className={styles.overlay} onClick={() => { setLoginModalOpen(false); resetState(); }}>
       <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+
         {/* Close Button */}
         <button
           className={styles.closeBtn}
@@ -190,66 +227,90 @@ export default function LoginModal() {
               className={styles.modalLogo}
             />
           </div>
-          <h3 className={styles.title}>Welcome</h3>
+          <h3 className={styles.title}>
+            {step === 1 ? "Sign In / Sign Up" : "Verify OTP"}
+          </h3>
           <p className={styles.subtitle}>
-            {step === 1 ? "Sign in or register to continue" : `Verify code sent to +91 ${phoneNumber}`}
+            {step === 1
+              ? "Enter your 10-digit mobile number to continue"
+              : `Enter the 6-digit OTP sent to +91 ${formattedPhone}`}
           </p>
         </div>
 
         {/* Error / Success banners */}
-        {error && <div className={styles.errorBanner}>{error}</div>}
+        {error && (
+          <div className={styles.errorBanner}>{error}</div>
+        )}
         {successMsg && (
-          <div className={styles.errorBanner} style={{ background: "#dcfce7", color: "#15803d", borderColor: "#86efac" }}>
+          <div
+            className={styles.errorBanner}
+            style={{ background: "#dcfce7", color: "#15803d", borderColor: "#86efac" }}
+          >
             ✅ {successMsg}
           </div>
         )}
 
-
         {step === 1 ? (
-          /* ── Step 1: Enter Phone ── */
+          /* ── Step 1: Mobile Number ── */
           <form onSubmit={handleSendOtp} className={styles.form}>
             <div className={styles.inputContainer}>
               <span className={styles.countryCode}>+91</span>
               <div className={styles.inputWrapper}>
                 <Phone size={18} className={styles.inputIcon} />
                 <input
+                  id="login-phone-input"
                   type="tel"
-                  placeholder="Phone number"
+                  inputMode="numeric"
+                  pattern="[0-9]{10}"
+                  placeholder="Enter 10-digit mobile number"
                   className={styles.inputField}
                   value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  maxLength={14}
+                  onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
+                  maxLength={10}
                   autoFocus
                   disabled={sendingOtp}
+                  required
                 />
               </div>
             </div>
 
-            <button type="submit" className={styles.submitBtn} disabled={sendingOtp}>
+            <button
+              id="login-send-otp-btn"
+              type="submit"
+              className={styles.submitBtn}
+              disabled={sendingOtp || cleanPhone.length !== 10}
+            >
               {sendingOtp ? (
-                <><Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Sending…</>
+                <>
+                  <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+                  <span>Sending OTP…</span>
+                </>
               ) : (
-                <><span>Get Verification Code</span><ChevronRight size={16} /></>
+                <>
+                  <span>Send OTP</span>
+                  <ChevronRight size={16} />
+                </>
               )}
             </button>
           </form>
         ) : (
-          /* ── Step 2: Enter OTP ── */
+          /* ── Step 2: OTP Verification ── */
           <form onSubmit={handleVerifyOtp} className={styles.form}>
-            <div className={styles.otpGrid}>
-              {otp.map((digit, index) => (
+            <div className={styles.otpGrid} onPaste={handleOtpPaste}>
+              {otp.map((digit, i) => (
                 <input
-                  key={index}
-                  ref={otpRefs[index]}
+                  key={i}
+                  ref={otpRefs[i]}
+                  id={`otp-input-${i}`}
                   type="text"
-                  pattern="[0-9]*"
                   inputMode="numeric"
+                  pattern="[0-9]*"
                   maxLength={1}
-                  className={styles.otpInput}
+                  className={`${styles.otpInput} ${digit ? styles.otpFilled : ""}`}
                   value={digit}
-                  onChange={(e) => handleOtpChange(index, e.target.value)}
-                  onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                  autoFocus={index === 0}
+                  onChange={(e) => handleOtpChange(i, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                  autoFocus={i === 0}
                   disabled={verifyingOtp}
                 />
               ))}
@@ -265,35 +326,47 @@ export default function LoginModal() {
                   onClick={handleResendOtp}
                   disabled={sendingOtp}
                 >
-                  {sendingOtp ? "Resending…" : "Resend verification code"}
+                  {sendingOtp ? "Resending…" : "Resend OTP"}
                 </button>
               )}
             </div>
 
-            <button type="submit" className={styles.submitBtn} disabled={verifyingOtp}>
+            <button
+              id="login-verify-otp-btn"
+              type="submit"
+              className={styles.submitBtn}
+              disabled={verifyingOtp || otp.join("").length < 6}
+            >
               {verifyingOtp ? (
-                <><Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Verifying…</>
+                <>
+                  <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+                  <span>Verifying…</span>
+                </>
               ) : (
-                <><Check size={16} /><span>Verify &amp; Sign In</span></>
+                <>
+                  <Check size={16} />
+                  <span>Verify &amp; Continue</span>
+                </>
               )}
             </button>
 
-            <button type="button" className={styles.backBtn} onClick={() => { setStep(1); setError(""); setDevOtp(null); }}>
-              ← Change phone number
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={() => { setStep(1); setError(""); setSuccessMsg(""); }}
+            >
+              <ArrowLeft size={14} style={{ display: "inline", marginRight: 4 }} />
+              Change mobile number
             </button>
           </form>
         )}
 
-        {/* Policy Links */}
+        {/* Policy */}
         <div className={styles.policyLinks}>
           By continuing, you agree to our{" "}
-          <Link href="/terms" className={styles.policyLink} onClick={() => setLoginModalOpen(false)}>
-            Terms &amp; Conditions
-          </Link>{" "}
-          and{" "}
-          <Link href="/privacy" className={styles.policyLink} onClick={() => setLoginModalOpen(false)}>
-            Privacy Policy
-          </Link>.
+          <Link href="/terms" className={styles.policyLink} onClick={() => setLoginModalOpen(false)}>Terms</Link>
+          {" "}and{" "}
+          <Link href="/privacy" className={styles.policyLink} onClick={() => setLoginModalOpen(false)}>Privacy Policy</Link>.
         </div>
       </div>
     </div>

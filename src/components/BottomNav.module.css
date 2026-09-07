@@ -6,7 +6,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 80;
+  z-index: 999;
   padding: 0 16px;
   pointer-events: none;
 }
@@ -15,22 +15,32 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: rgba(247, 244, 238, 0.88);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(164, 116, 73, 0.15);
-  border-radius: 40px;
-  padding: 8px 12px;
-  width: 100%;
-  max-width: 480px;
+  background-color: rgba(247, 245, 240, 0.92);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 9999px;
+  padding: 6px 10px;
+  width: auto;
+  min-width: 310px;
+  max-width: 360px;
   box-shadow:
-    0 10px 30px rgba(30, 26, 23, 0.1),
-    0 1px 4px rgba(30, 26, 23, 0.04);
+    0 12px 32px rgba(0, 0, 0, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.04);
   pointer-events: auto;
-  gap: 4px;
+  gap: 8px;
+}
+
+:global(.dark) .navBar {
+  background-color: rgba(24, 24, 27, 0.92);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .navItem {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -38,11 +48,15 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  color: var(--text-secondary);
+  color: #4b5563;
   background-color: transparent;
   border: none;
   cursor: pointer;
   padding: 0;
+}
+
+:global(.dark) .navItem {
+  color: #a1a1aa;
 }
 
 .navText {
@@ -50,153 +64,53 @@
 }
 
 .inactiveItem:hover {
-  color: var(--accent);
-  background-color: var(--accent-light);
+  color: #134e4a;
+  background-color: rgba(19, 78, 74, 0.08);
+  transform: translateY(-1px);
 }
 
+:global(.dark) .inactiveItem:hover {
+  color: #2dd4bf;
+  background-color: rgba(45, 212, 191, 0.1);
+}
+
+/* Active tab styled as the dark green circular pill from the screenshot */
 .activeItem {
-  background: var(--accent-gradient);
+  background-color: #134e4a;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(19, 78, 74, 0.35);
+  transform: scale(1.04);
+}
+
+:global(.dark) .activeItem {
+  background-color: #0f766e;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.45);
+}
+
+.badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  background-color: #ea580c;
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(164, 116, 73, 0.3);
+  border-radius: 9999px;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.9);
 }
 
 @media (max-width: 480px) {
   .navContainer {
-    bottom: 20px;
+    bottom: 16px;
   }
-}
-
-@media (min-width: 768px) {
-  .navContainer {
-    position: fixed;
-    top: 24px;
-    bottom: auto;
-    left: 0;
-    right: 0;
-    z-index: 998;
-    padding: 0 24px;
-    width: 100%;
-    height: auto;
-    background-color: transparent;
-    border-bottom: none;
-    pointer-events: none;
-    box-shadow: none;
-  }
-
   .navBar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    background-color: rgba(247, 244, 238, 0.88);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(164, 116, 73, 0.15);
-    border-radius: 40px;
-    padding: 8px 14px;
-    width: 100%;
-    max-width: 680px;
-    box-shadow:
-      0 10px 30px rgba(30, 26, 23, 0.1),
-      0 1px 4px rgba(30, 26, 23, 0.04);
-    pointer-events: auto;
+    min-width: 290px;
+    gap: 4px;
   }
-
-  .navItem {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
-    width: auto;
-    height: 40px;
-    padding: 0 16px;
-    border-radius: 20px;
-    color: var(--text-secondary);
-    background-color: transparent;
-    transition: all 0.2s ease;
-  }
-
-  .navItem:hover {
-    color: var(--accent);
-    background-color: var(--accent-light);
-  }
-
-  .activeItem {
-    background: var(--accent-gradient);
-    color: #ffffff;
-    box-shadow: 0 3px 10px rgba(164, 116, 73, 0.25);
-  }
-
-  .navText {
-    display: inline-block;
-    font-family: var(--font-body);
-    font-size: 13px;
-    font-weight: 650;
-    letter-spacing: -0.1px;
-  }
-}
-
-/* Forced Bottom Navigation Styles (all screens) */
-.forceBottom {
-  position: fixed !important;
-  bottom: 24px !important;
-  top: auto !important;
-  left: 0 !important;
-  right: 0 !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  z-index: 80 !important;
-  padding: 0 16px !important;
-  width: 100% !important;
-  height: auto !important;
-  background-color: transparent !important;
-  pointer-events: none !important;
-  box-shadow: none !important;
-}
-
-.forceBottomBar {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  background-color: rgba(247, 244, 238, 0.88) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  border: 1px solid rgba(164, 116, 73, 0.15) !important;
-  border-radius: 40px !important;
-  padding: 8px 12px !important;
-  width: 100% !important;
-  max-width: 480px !important;
-  box-shadow:
-    0 10px 30px rgba(30, 26, 23, 0.1),
-    0 1px 4px rgba(30, 26, 23, 0.04) !important;
-  pointer-events: auto !important;
-  gap: 4px !important;
-}
-
-.forceBottom .navItem {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  width: 44px !important;
-  height: 44px !important;
-  border-radius: 50% !important;
-  padding: 0 !important;
-  color: var(--text-secondary) !important;
-  background-color: transparent !important;
-}
-
-.forceBottom .navItem:hover {
-  color: var(--accent) !important;
-  background-color: var(--accent-light) !important;
-}
-
-.forceBottom .activeItem {
-  background: var(--accent-gradient) !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 14px rgba(164, 116, 73, 0.3) !important;
-}
-
-.forceBottom .navText {
-  display: none !important;
 }

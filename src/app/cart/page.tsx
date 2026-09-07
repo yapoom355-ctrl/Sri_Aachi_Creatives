@@ -31,6 +31,7 @@ export default function MobileCartPage() {
     checkoutWithCOD,
     checkoutWithRazorpay,
     isLoggedIn,
+    setLoginModalOpen,
   } = useCart();
 
   const [promoCode, setPromoCode] = useState("");
@@ -60,64 +61,17 @@ export default function MobileCartPage() {
     }
   };
 
-  const handleCheckout = async () => {
-    if (!selectedAddress) {
-      setCheckoutError("Please select a delivery address.");
+  const handleCheckout = () => {
+    if (!isLoggedIn) {
+      setLoginModalOpen(true);
       return;
     }
     if (cartItems.length === 0) {
       setCheckoutError("Your cart is empty.");
       return;
     }
-
-    setCheckoutError(null);
-    setIsCheckingOut(true);
-    try {
-      let orderId: string;
-      if (paymentMethod === "COD") {
-        orderId = await checkoutWithCOD(selectedAddress.id);
-      } else {
-        orderId = await checkoutWithRazorpay(selectedAddress.id);
-      }
-      router.push(`/order/${orderId}`);
-    } catch (err: any) {
-      if (err?.message === "Payment cancelled") {
-        setCheckoutError("Payment was cancelled. Please try again.");
-      } else {
-        setCheckoutError(err?.message ?? "Checkout failed. Please try again.");
-      }
-    } finally {
-      setIsCheckingOut(false);
-    }
+    router.push("/checkout");
   };
-
-  if (!isLoggedIn) {
-    return (
-      <MobileContainer>
-        <header className={styles.header}>
-          <button onClick={() => router.back()} className={styles.iconButton} aria-label="Go back">
-            <ChevronLeft size={22} strokeWidth={1.8} className={styles.icon} />
-          </button>
-          <h2 className={styles.title}>Cart</h2>
-          <div className={styles.iconButton} />
-        </header>
-        <main className={styles.mainContent}>
-          <div className={styles.emptyState}>
-            <ShoppingBag size={48} strokeWidth={1} style={{ opacity: 0.3, marginBottom: "1rem" }} />
-            <p>Please log in to view your cart.</p>
-            <button
-              className={styles.checkoutBtn}
-              style={{ marginTop: "1rem" }}
-              onClick={() => router.push("/profile")}
-            >
-              Log In
-            </button>
-          </div>
-        </main>
-        <BottomNav />
-      </MobileContainer>
-    );
-  }
 
   return (
     <MobileContainer>
@@ -139,8 +93,11 @@ export default function MobileCartPage() {
           <>
             {/* ── Cart Items ────────────────────────────────────────── */}
             <div className={styles.itemsList}>
-              {cartItems.map((item) => (
-                <div key={`${item.id}-${item.size}-${item.color}`} className={styles.cartItem}>
+              {cartItems.map((item, idx) => (
+                <div
+                  key={`${item.id}-${item.size}-${item.color}-${item.customInstructions || ""}-${item.customImage || ""}-${idx}`}
+                  className={styles.cartItem}
+                >
                   <div className={styles.imageContainer}>
                     <Image
                       src={item.image}
@@ -150,7 +107,15 @@ export default function MobileCartPage() {
                       className={styles.itemImage}
                     />
                     <button
-                      onClick={() => removeFromCart(item.id, item.size, item.color)}
+                      onClick={() =>
+                        removeFromCart(
+                          item.id,
+                          item.size,
+                          item.color,
+                          item.customInstructions,
+                          item.customImage
+                        )
+                      }
                       className={styles.removeButton}
                       aria-label="Remove item"
                     >
@@ -160,11 +125,65 @@ export default function MobileCartPage() {
 
                   <div className={styles.itemInfo}>
                     <h3 className={styles.itemName}>{item.name}</h3>
+
+                    {/* Customization Details Preview */}
+                    {item.customInstructions && (
+                      <div
+                        style={{
+                          fontSize: "11px",
+                          color: "#4338ca",
+                          background: "#eef2ff",
+                          padding: "3px 8px",
+                          borderRadius: "6px",
+                          margin: "4px 0",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        ✍️ <strong>Text:</strong> {item.customInstructions}
+                      </div>
+                    )}
+                    {item.customImage && (
+                      <div
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontSize: "11px",
+                          color: "#065f46",
+                          background: "#ecfdf5",
+                          padding: "3px 8px",
+                          borderRadius: "6px",
+                          margin: "4px 0",
+                        }}
+                      >
+                        <img
+                          src={item.customImage}
+                          alt="Custom upload"
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "3px",
+                            objectFit: "cover",
+                          }}
+                        />
+                        <span>Photo attached</span>
+                      </div>
+                    )}
+
                     <div className={styles.priceRow}>
                       <span className={styles.itemPrice}>{item.price}</span>
                       <div className={styles.quantityControls}>
                         <button
-                          onClick={() => updateQuantity(item.id, item.size, item.color, item.quantity - 1)}
+                          onClick={() =>
+                            updateQuantity(
+                              item.id,
+                              item.size,
+                              item.color,
+                              item.quantity - 1,
+                              item.customInstructions,
+                              item.customImage
+                            )
+                          }
                           className={styles.qtyBtn}
                           aria-label="Decrease quantity"
                         >
@@ -172,7 +191,16 @@ export default function MobileCartPage() {
                         </button>
                         <span className={styles.qtyText}>{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.size, item.color, item.quantity + 1)}
+                          onClick={() =>
+                            updateQuantity(
+                              item.id,
+                              item.size,
+                              item.color,
+                              item.quantity + 1,
+                              item.customInstructions,
+                              item.customImage
+                            )
+                          }
                           className={styles.qtyBtn}
                           aria-label="Increase quantity"
                         >
@@ -184,36 +212,6 @@ export default function MobileCartPage() {
                 </div>
               ))}
             </div>
-
-            {/* ── Promo Code ────────────────────────────────────────── */}
-            <form onSubmit={handleApplyPromo} className={styles.promoForm}>
-              <input
-                type="text"
-                placeholder="Enter Discount code"
-                value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value)}
-                className={styles.promoInput}
-              />
-              <button type="submit" className={styles.promoButton}>
-                Apply
-              </button>
-            </form>
-
-            {appliedCoupon && (
-              <div className={styles.couponsLinkContainer}>
-                <span style={{ fontSize: "0.75rem", color: "#22c55e" }}>
-                  ✅ Coupon "{appliedCoupon}" applied
-                </span>
-                <button
-                  type="button"
-                  className={styles.couponsLink}
-                  onClick={removeCoupon}
-                  style={{ marginLeft: "auto" }}
-                >
-                  Remove
-                </button>
-              </div>
-            )}
 
             {/* ── Shipping Address ──────────────────────────────────── */}
             <div className={styles.addressSection}>
@@ -301,64 +299,6 @@ export default function MobileCartPage() {
               )}
             </div>
 
-            {/* ── Payment Method ────────────────────────────────────── */}
-            <div className={styles.addressSection}>
-              <div className={styles.sectionHeader}>
-                <h4 className={styles.sectionTitle}>
-                  <CreditCard size={14} style={{ marginRight: 4, display: "inline" }} />
-                  Payment Method
-                </h4>
-              </div>
-              <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod("COD")}
-                  style={{
-                    flex: 1,
-                    padding: "0.75rem",
-                    borderRadius: "12px",
-                    border: paymentMethod === "COD" ? "2px solid #111" : "1.5px solid #e5e5e5",
-                    background: paymentMethod === "COD" ? "#111" : "#fff",
-                    color: paymentMethod === "COD" ? "#fff" : "#111",
-                    fontWeight: 600,
-                    fontSize: "0.78rem",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "0.4rem",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  <Wallet size={14} />
-                  Cash on Delivery
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod("RAZORPAY")}
-                  style={{
-                    flex: 1,
-                    padding: "0.75rem",
-                    borderRadius: "12px",
-                    border: paymentMethod === "RAZORPAY" ? "2px solid #6366f1" : "1.5px solid #e5e5e5",
-                    background: paymentMethod === "RAZORPAY" ? "#6366f1" : "#fff",
-                    color: paymentMethod === "RAZORPAY" ? "#fff" : "#111",
-                    fontWeight: 600,
-                    fontSize: "0.78rem",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "0.4rem",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  <CreditCard size={14} />
-                  Pay Online
-                </button>
-              </div>
-            </div>
-
             {/* ── Price Summary ─────────────────────────────────────── */}
             <div className={styles.pricingSummary}>
               <div className={styles.summaryRow}>
@@ -411,14 +351,8 @@ export default function MobileCartPage() {
                 className={styles.checkoutBtn}
                 type="button"
                 onClick={handleCheckout}
-                disabled={isCheckingOut || !selectedAddress}
-                style={{ opacity: isCheckingOut ? 0.7 : 1 }}
               >
-                {isCheckingOut
-                  ? "Processing…"
-                  : paymentMethod === "COD"
-                    ? "Place Order (COD)"
-                    : "Proceed to Pay"}
+                Proceed to Checkout • ₹{grandTotal.toFixed(2)} →
               </button>
             </div>
           </>

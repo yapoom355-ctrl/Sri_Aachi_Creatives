@@ -7,22 +7,20 @@ import ProductDetailsHeader from "@/components/ProductDetailsHeader";
 import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/BottomNav";
 import { GET_PRODUCTS, GET_CATEGORIES } from "@/graphql/queries";
+import { resolveProductImage } from "@/utils/productImages";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import styles from "./page.module.css";
 
-const SIZES = ["All", "S", "M", "L", "XL", "XXL"];
-
 const PRICE_RANGES = [
   { id: "all", label: "All Prices" },
-  { id: "under-50", label: "Under $50" },
-  { id: "50-100", label: "$50 - $100" },
-  { id: "over-100", label: "Over $100" },
+  { id: "under-1000", label: "Under ₹1,000" },
+  { id: "1000-5000", label: "₹1,000 - ₹5,000" },
+  { id: "over-5000", label: "Over ₹5,000" },
 ];
 
 export default function ProductsV2Page() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedSize, setSelectedSize] = useState("All");
   const [selectedPriceRange, setSelectedPriceRange] = useState("all");
   const [showFilterPanel, setShowFilterPanel] = useState(true);
 
@@ -30,63 +28,68 @@ export default function ProductsV2Page() {
   const { data: prodData, loading: prodLoading } = useQuery<any>(GET_PRODUCTS);
   const { data: catData, loading: catLoading } = useQuery<any>(GET_CATEGORIES);
 
-  // Map Categories
-  const apiCategories = catData?.categories?.map((c: any) => ({
-    id: c.title.toLowerCase(),
-    name: c.title,
-    emoji: "🛍️",
-  })) || [];
+  // Map Categories & Filter out Default Category
+  const rawCategories =
+    catData?.categories?.edges?.map((e: any) => e.node) ||
+    (Array.isArray(catData?.categories) ? catData.categories : []);
+
+  const apiCategories = rawCategories
+    .filter((c: any) => {
+      const name = (c.name || c.title || "").toLowerCase();
+      return name && !name.includes("default category");
+    })
+    .map((c: any) => ({
+      id: (c.name || c.title || "").toLowerCase(),
+      name: c.name || c.title || "Category",
+      emoji: "🛍️",
+    }));
   
   const CATEGORIES = [{ id: "all", name: "All", emoji: "🛍️" }, ...apiCategories];
 
-  // Fallback images
-  const FALLBACK_IMAGES = [
-    "/images/resin-art-block.webp",
-    "/images/resin-table.webp",
-    "/images/photo-frame.webp",
-    "/images/motor-engine-table.webp",
-    "/images/motor-engine-table-3.webp"
-  ];
-
   // Map Products
-  const productsList = prodData?.products?.map((p: any, index: number) => ({
-    id: p.id,
-    name: p.title,
-    subtitle: p.subtitle || "",
-    description: p.description || "",
-    price: `$${p.effectivePrice || p.price || 0}`,
-    numericPrice: p.effectivePrice || p.price || 0,
-    image: p.thumbnail?.mediaUrl || FALLBACK_IMAGES[index % FALLBACK_IMAGES.length],
-    category: p.categories?.[0]?.title?.toLowerCase() || "",
-    isLiked: false,
-    rating: 5.0,
-    reviewsCount: 1,
-    colors: ["#768067", "#c08457"],
-    sizes: ["S", "M", "L"],
-    limited: false,
-  })) || [];
+  const rawProducts =
+    prodData?.products?.edges?.map((e: any) => e.node) ||
+    (Array.isArray(prodData?.products) ? prodData.products : []);
+
+  const productsList = rawProducts.map((p: any) => {
+    const grossPrice = p.pricing?.priceRange?.start?.gross?.amount ?? p.effectivePrice ?? p.price ?? 0;
+    const thumb = p.thumbnail?.url || p.thumbnail?.mediaUrl;
+    return {
+      id: p.id,
+      variantId: p.variants?.[0]?.id,
+      name: p.name || p.title || "Product",
+      subtitle: p.subtitle || p.category?.name || "",
+      description: p.description || "",
+      price: `₹${grossPrice}`,
+      numericPrice: Number(grossPrice),
+      image: resolveProductImage(thumb, `${p.name} ${p.slug}`, p.id),
+      category: (p.category?.name || p.categories?.[0]?.title || "").toLowerCase(),
+      isLiked: false,
+      colors: ["#768067", "#c08457"],
+      sizes: ["Standard"],
+      limited: false,
+    };
+  });
 
   const filteredProducts = productsList.filter((product: any) => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
-    const matchesSize = selectedSize === "All" || product.sizes.includes(selectedSize);
     
     let matchesPrice = true;
-    if (selectedPriceRange === "under-50") {
-      matchesPrice = product.numericPrice < 50;
-    } else if (selectedPriceRange === "50-100") {
-      matchesPrice = product.numericPrice >= 50 && product.numericPrice <= 100;
-    } else if (selectedPriceRange === "over-100") {
-      matchesPrice = product.numericPrice > 100;
+    if (selectedPriceRange === "under-1000") {
+      matchesPrice = product.numericPrice < 1000;
+    } else if (selectedPriceRange === "1000-5000") {
+      matchesPrice = product.numericPrice >= 1000 && product.numericPrice <= 5000;
+    } else if (selectedPriceRange === "over-5000") {
+      matchesPrice = product.numericPrice > 5000;
     }
 
-    return matchesSearch && matchesCategory && matchesSize && matchesPrice;
+    return matchesSearch && matchesCategory && matchesPrice;
   });
 
   const resetFilters = () => {
     setSearchQuery("");
     setSelectedCategory("all");
-    setSelectedSize("All");
     setSelectedPriceRange("all");
   };
 
@@ -147,57 +150,42 @@ export default function ProductsV2Page() {
               </div>
             </div>
 
-            {/* Size filters */}
-            <div className={styles.filterSection}>
-              <h4 className={styles.filterLabel}>Size</h4>
-              <div className={styles.sizesRow}>
-                {SIZES.map((sz) => (
-                  <button
-                    key={sz}
-                    onClick={() => setSelectedSize(sz)}
-                    className={`${styles.sizeBtn} ${selectedSize === sz ? styles.sizeActive : styles.sizeInactive}`}
-                    type="button"
-                  >
-                    {sz}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Price filters */}
+            {/* Price filters in INR */}
             <div className={styles.filterSection}>
               <h4 className={styles.filterLabel}>Price Range</h4>
-              <div className={styles.priceRow}>
+              <div className={`${styles.horizontalSlider} no-scrollbar`}>
                 {PRICE_RANGES.map((pr) => (
                   <button
                     key={pr.id}
                     onClick={() => setSelectedPriceRange(pr.id)}
-                    className={`${styles.priceBtn} ${selectedPriceRange === pr.id ? styles.priceActive : styles.priceInactive}`}
+                    className={`${styles.pill} ${selectedPriceRange === pr.id ? styles.pillActive : styles.pillInactive}`}
                     type="button"
                   >
-                    {pr.label}
+                    <span>{pr.label}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Reset Action */}
-            {(selectedCategory !== "all" || selectedSize !== "All" || selectedPriceRange !== "all" || searchQuery !== "") && (
-              <button onClick={resetFilters} className={styles.resetButton} type="button">
-                Clear Filters <X size={12} strokeWidth={3} style={{ marginLeft: 6 }} />
-              </button>
+            {/* Clear filters row if active */}
+            {(selectedCategory !== "all" || selectedPriceRange !== "all" || searchQuery) && (
+              <div className={styles.resetRow}>
+                <button onClick={resetFilters} className={styles.resetBtn}>
+                  <X size={14} /> Clear all filters
+                </button>
+              </div>
             )}
           </div>
         )}
 
-        {/* Feedback metadata */}
-        <div className={styles.resultsInfo}>
-          <span className={styles.resultsText}>
-            Showing {filteredProducts.length} {filteredProducts.length === 1 ? "result" : "results"}
+        {/* Results summary bar */}
+        <div className={styles.resultsBar}>
+          <span className={styles.resultsCount}>
+            Showing <strong>{filteredProducts.length}</strong> items
           </span>
         </div>
 
-        {/* Dynamic products list grid */}
+        {/* Products Grid */}
         {filteredProducts.length > 0 ? (
           <div className={styles.grid}>
             {filteredProducts.map((product: any) => (
@@ -206,9 +194,9 @@ export default function ProductsV2Page() {
           </div>
         ) : (
           <div className={styles.emptyState}>
-            <p className={styles.emptyText}>No products match selected filters.</p>
-            <button onClick={resetFilters} className={styles.emptyResetBtn}>
-              Reset filters
+            <p>No products found matching your active filters.</p>
+            <button onClick={resetFilters} className={styles.clearFiltersBtn}>
+              Reset Filters
             </button>
           </div>
         )}

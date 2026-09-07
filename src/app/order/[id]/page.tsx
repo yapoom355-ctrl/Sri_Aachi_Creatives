@@ -90,7 +90,10 @@ export default function OrderDetailsPage({ params }: PageProps) {
         </button>
         <h2 className={styles.title}>Order Details</h2>
         <button
-          onClick={() => alert("Connecting with support…")}
+          onClick={() => {
+            const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "916366858878";
+            window.open(`https://wa.me/${whatsapp}?text=Hi, I need help with my order.`, "_blank");
+          }}
           className={styles.iconButton}
           aria-label="Support Help"
         >
@@ -149,23 +152,75 @@ export default function OrderDetailsPage({ params }: PageProps) {
             <div className={styles.card}>
               <h3 className={styles.cardTitle}>Purchased Items</h3>
               <div className={styles.itemsList}>
-                {order.items?.map((item: any, idx: number) => (
+                {(order.lines || order.items || []).map((item: any, idx: number) => (
                   <div key={idx} className={styles.itemRow}>
                     <div className={styles.itemImageWrapper}>
                       <Image
-                        src={item.product?.thumbnail?.mediaUrl ?? "/images/motor-engine-table-3.webp"}
-                        alt={item.product?.title ?? "Product"}
+                        src={item.thumbnail?.url || item.product?.thumbnail?.mediaUrl || "/images/motor-engine-table-3.webp"}
+                        alt={item.productName || item.product?.title || "Product"}
                         width={50}
                         height={50}
                         className={styles.itemImage}
                       />
                     </div>
                     <div className={styles.itemMeta}>
-                      <h4 className={styles.itemName}>{item.product?.title}</h4>
+                      <h4 className={styles.itemName}>{item.productName || item.product?.title || "Item"}</h4>
                       <span className={styles.itemSpecs}>Qty: {item.quantity}</span>
+
+                      {/* Display Customization Details if present */}
+                      {item.metadata?.find((m: any) => m.key === "instructions")?.value && (
+                        <div
+                          style={{
+                            fontSize: "0.75rem",
+                            color: "#4338ca",
+                            background: "#eef2ff",
+                            padding: "2px 6px",
+                            borderRadius: "4px",
+                            marginTop: "4px",
+                            wordBreak: "break-word",
+                          }}
+                        >
+                          ✍️ <strong>Custom Text:</strong>{" "}
+                          {item.metadata.find((m: any) => m.key === "instructions").value}
+                        </div>
+                      )}
+                      {item.metadata?.find((m: any) => m.key === "file_url")?.value && (
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            fontSize: "0.75rem",
+                            color: "#065f46",
+                            background: "#ecfdf5",
+                            padding: "2px 6px",
+                            borderRadius: "4px",
+                            marginTop: "4px",
+                          }}
+                        >
+                          <img
+                            src={item.metadata.find((m: any) => m.key === "file_url").value}
+                            alt="Custom photo"
+                            style={{
+                              width: "16px",
+                              height: "16px",
+                              borderRadius: "2px",
+                              objectFit: "cover",
+                            }}
+                          />
+                          <a
+                            href={item.metadata.find((m: any) => m.key === "file_url").value}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: "#065f46", textDecoration: "underline" }}
+                          >
+                            View Uploaded Photo
+                          </a>
+                        </div>
+                      )}
                     </div>
                     <span className={styles.itemPrice}>
-                      ₹{((item.product?.effectivePrice ?? item.product?.price ?? 0) * item.quantity).toFixed(2)}
+                      ₹{(item.unitPrice?.gross?.amount ? item.unitPrice.gross.amount * item.quantity : 0).toFixed(2)}
                     </span>
                   </div>
                 ))}
@@ -176,17 +231,21 @@ export default function OrderDetailsPage({ params }: PageProps) {
           {/* Right Column */}
           <div className={styles.rightCol}>
             {/* Address */}
-            {addr && (
+            {(order.shippingAddress || order.deliveryAddress) && (
               <div className={styles.card}>
                 <div className={styles.sectionHeader}>
                   <MapPin size={18} strokeWidth={2} className={styles.sectionIcon} />
                   <h3 className={styles.cardTitleInline}>Shipping Address</h3>
                 </div>
                 <div className={styles.addressMeta}>
-                  <h4 className={styles.addressName}>{addr.customerName}</h4>
-                  <p className={styles.addressText}>{addr.addressLine1}</p>
-                  <p className={styles.addressText}>{addr.district}, {addr.state} — {addr.pincode}</p>
-                  <p className={styles.addressPhone}>Phone: {addr.phoneNumber}</p>
+                  <h4 className={styles.addressName}>
+                    {order.shippingAddress?.firstName ? `${order.shippingAddress.firstName} ${order.shippingAddress.lastName || ""}` : order.deliveryAddress?.customerName || "Customer"}
+                  </h4>
+                  <p className={styles.addressText}>{order.shippingAddress?.streetAddress1 || order.deliveryAddress?.addressLine1}</p>
+                  <p className={styles.addressText}>
+                    {order.shippingAddress?.city || order.deliveryAddress?.district}, {order.shippingAddress?.countryArea || order.deliveryAddress?.state} — {order.shippingAddress?.postalCode || order.deliveryAddress?.pincode}
+                  </p>
+                  <p className={styles.addressPhone}>Phone: {order.shippingAddress?.phone || order.deliveryAddress?.phoneNumber}</p>
                 </div>
               </div>
             )}
@@ -199,7 +258,7 @@ export default function OrderDetailsPage({ params }: PageProps) {
               </div>
               <div className={styles.paymentMeta}>
                 <span className={styles.cardType}>
-                  {order.paymentStatus === "PAID" ? "✅ Paid" : order.paymentStatus === "PENDING" ? "⏳ Pending" : order.paymentStatus}
+                  {order.isPaid || order.paymentStatus === "PAID" ? "✅ Paid" : order.paymentStatus === "PENDING" ? "⏳ Pending" : order.paymentStatus || "Processed"}
                 </span>
               </div>
             </div>
@@ -210,29 +269,11 @@ export default function OrderDetailsPage({ params }: PageProps) {
               <div className={styles.priceSummary}>
                 <div className={styles.priceRow}>
                   <span className={styles.priceLabel}>Subtotal</span>
-                  <span className={styles.priceValue}>₹{order.itemTotal?.toFixed(2)}</span>
+                  <span className={styles.priceValue}>₹{(order.subtotal?.gross?.amount ?? order.itemTotal ?? 0).toFixed(2)}</span>
                 </div>
-                {order.discountApplied > 0 && (
-                  <div className={styles.priceRow}>
-                    <span className={styles.priceLabel}>Discount</span>
-                    <span className={styles.priceValue} style={{ color: "#22c55e" }}>-₹{order.discountApplied?.toFixed(2)}</span>
-                  </div>
-                )}
-                {order.deliveryFee > 0 && (
-                  <div className={styles.priceRow}>
-                    <span className={styles.priceLabel}>Delivery</span>
-                    <span className={styles.priceValue}>₹{order.deliveryFee?.toFixed(2)}</span>
-                  </div>
-                )}
-                {order.tax > 0 && (
-                  <div className={styles.priceRow}>
-                    <span className={styles.priceLabel}>Tax</span>
-                    <span className={styles.priceValue}>₹{order.tax?.toFixed(2)}</span>
-                  </div>
-                )}
                 <div className={`${styles.priceRow} ${styles.totalRow}`}>
                   <span className={styles.totalLabel}>Total</span>
-                  <span className={styles.totalValue}>₹{order.grandTotal?.toFixed(2)}</span>
+                  <span className={styles.totalValue}>₹{(order.total?.gross?.amount ?? order.grandTotal ?? 0).toFixed(2)}</span>
                 </div>
               </div>
             </div>

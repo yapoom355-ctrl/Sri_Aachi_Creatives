@@ -36,18 +36,13 @@ export default function Footer() {
               </Link>
             </li>
             <li>
-              <Link href="/products-v2" className={styles.link}>
+              <Link href="/products" className={styles.link}>
                 All Collections
               </Link>
             </li>
             <li>
-              <Link href="/categories-v2" className={styles.link}>
+              <Link href="/categories" className={styles.link}>
                 Categories
-              </Link>
-            </li>
-            <li>
-              <Link href="/coupons" className={styles.link}>
-                Offers & Deals
               </Link>
             </li>
           </ul>
@@ -81,21 +76,26 @@ export default function Footer() {
           <ul className={styles.contactList}>
             <li>
               <span className={styles.contactLabel}>Email</span>
-              <a href="mailto:hello@sriaachicreatives.com" className={styles.contactValue}>
-                hello@sriaachicreatives.com
+              <a href="mailto:sriaachicreatives@gmail.com" className={styles.contactValue}>
+                sriaachicreatives@gmail.com
               </a>
             </li>
             <li>
               <span className={styles.contactLabel}>Phone</span>
-              <a href="tel:+919999999999" className={styles.contactValue}>
-                +91 99999 99999
+              <a href="tel:+916366858878" className={styles.contactValue}>
+                +91 63668 58878
               </a>
             </li>
             <li>
-              <span className={styles.contactLabel}>Studio</span>
-              <span className={styles.contactValue}>
-                Sri Aachi Creatives Studio, Chennai, Tamil Nadu
-              </span>
+              <span className={styles.contactLabel}>WhatsApp</span>
+              <a
+                href="https://wa.me/916366858878?text=Hi%20Sri%20Aachi%20Creatives,%20I'm%20interested%20in%20customizing%20a%20product."
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.contactValue}
+              >
+                +91 63668 58878 (Chat now)
+              </a>
             </li>
           </ul>
         </div>

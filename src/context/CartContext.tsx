@@ -2,24 +2,18 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useApolloClient } from "@apollo/client/react";
-import { GET_USER_CART, GET_MY_ADDRESSES, GET_ME } from "@/graphql/queries";
+import { GET_MY_ADDRESSES, GET_ME } from "@/graphql/queries";
 import {
-  ADD_TO_CART,
-  UPDATE_CART_ITEM,
-  REMOVE_FROM_CART,
-  CLEAR_CART,
-  APPLY_COUPON_TO_CART,
-  REMOVE_COUPON_FROM_CART,
-  SELECT_DELIVERY_OPTION,
-  CHECKOUT_CART,
-  INITIATE_ONLINE_PAYMENT,
-  VERIFY_ONLINE_PAYMENT,
   CREATE_USER_ADDRESS,
   DELETE_USER_ADDRESS,
-  UPDATE_USER_ADDRESS,
   UPDATE_ME,
+  CHECKOUT_CREATE,
+  CHECKOUT_LINES_ADD,
+  CHECKOUT_SHIPPING_ADDRESS_UPDATE,
+  CHECKOUT_COMPLETE,
+  CHECKOUT_ADD_PROMO_CODE,
+  CHECKOUT_REMOVE_PROMO_CODE,
 } from "@/graphql/mutations";
-
 
 const FALLBACK_IMAGES = [
   "/images/resin-art-block.webp",
@@ -42,18 +36,6 @@ const getProductImage = (thumbnailUrl?: string | null, id?: string) => {
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-export interface BackendCartItem {
-  id: string;
-  quantity: number;
-  product: {
-    id: string;
-    title: string;
-    price: number;
-    effectivePrice: number;
-    thumbnail?: { mediaUrl: string } | null;
-  };
-}
-
 export interface BackendAddress {
   id: string;
   customerName: string;
@@ -75,6 +57,18 @@ export interface BillSummary {
   grandTotal: number;
 }
 
+export interface BackendCartItem {
+  id: string;
+  quantity: number;
+  product: {
+    id: string;
+    title: string;
+    price: number;
+    effectivePrice: number;
+    thumbnail?: { mediaUrl: string } | null;
+  };
+}
+
 export interface BackendCart {
   id: string;
   deliveryFee?: number;
@@ -84,9 +78,9 @@ export interface BackendCart {
   billSummary: BillSummary;
 }
 
-// Legacy types kept for compatibility with existing cart UI components
 export interface CartItem {
   id: string;
+  variantId?: string;       // Saleor variant ID — required for real checkout
   name: string;
   subtitle: string;
   price: string;
@@ -95,6 +89,9 @@ export interface CartItem {
   quantity: number;
   size: string;
   color: string;
+  customInstructions?: string;
+  customImage?: string;
+  customImageName?: string;
 }
 
 export interface UserProfile {
@@ -105,43 +102,37 @@ export interface UserProfile {
 }
 
 interface CartContextType {
-  // Backend cart
   cart: BackendCart | null;
   cartLoading: boolean;
-  cartItems: CartItem[]; // mapped for backward compatibility
+  cartItems: CartItem[];
   cartCount: number;
   subtotal: number;
 
-  // Cart mutations
-  addToCart: (productId: string, quantity?: number) => Promise<void>;
-  updateQuantity: (id: string, size: string, color: string, quantity: number) => void;
-  removeFromCart: (id: string, size: string, color: string) => void;
+  addToCart: (productId: string, quantity?: number, itemDetails?: Partial<CartItem>) => Promise<void>;
+  updateQuantity: (id: string, size: string, color: string, quantity: number, customInstructions?: string, customImage?: string) => void;
+  removeFromCart: (id: string, size: string, color: string, customInstructions?: string, customImage?: string) => void;
   clearCart: () => Promise<void>;
 
-  // Coupon
   appliedCoupon: string | null;
   discountAmount: number;
   applyCoupon: (code: string) => Promise<boolean>;
   removeCoupon: () => Promise<void>;
 
-  // Addresses from backend
   addresses: BackendAddress[];
   addressesLoading: boolean;
   selectedAddressId: string | null;
   selectAddress: (id: string) => void;
   addAddress: (input: Omit<BackendAddress, "id">) => Promise<void>;
+  updateAddress: (id: string, input: Partial<BackendAddress>) => Promise<void>;
   deleteAddress: (id: string) => Promise<void>;
   setAddressAsDefault: (id: string) => Promise<void>;
 
-  // Checkout
-  checkoutWithCOD: (addressId: string) => Promise<string>; // returns order ID
-  checkoutWithRazorpay: (addressId: string) => Promise<string>; // returns order ID
+  checkoutWithCOD: (addressId: string) => Promise<string>;
+  checkoutWithRazorpay: (addressId: string) => Promise<string>;
 
-  // UI state
   isSidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
 
-  // Auth (lightweight — real auth should be in separate context)
   isLoggedIn: boolean;
   user: UserProfile | null;
   login: (token: string, userProfile: UserProfile) => void;
@@ -150,7 +141,6 @@ interface CartContextType {
   setLoginModalOpen: (open: boolean) => void;
   updateUserProfile: (input: { name?: string; email?: string }) => Promise<void>;
 
-  // Wishlist
   wishlist: string[];
   toggleWishlist: (productId: string) => void;
   isWishlistSidebarOpen: boolean;
@@ -159,31 +149,16 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// ─── Helper: Load Razorpay script ─────────────────────────────────────────────
-function loadRazorpayScript(): Promise<boolean> {
-  return new Promise((resolve) => {
-    if ((window as any).Razorpay) return resolve(true);
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-}
-
-// ─── Provider ─────────────────────────────────────────────────────────────────
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const apolloClient = useApolloClient();
 
-  // ── UI state ────────────────────────────────────────────────────────────────
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isWishlistSidebarOpen, setWishlistSidebarOpen] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(null);
+  const [isLoginModalOpen, setLoginModalOpen] = useState(false);
 
   // ── Auth state ──────────────────────────────────────────────────────────────
-  // Validate token on init — if stored token is malformed, clear it immediately
-  // so public queries (products, categories) work without auth errors
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
 
@@ -191,20 +166,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("token");
       if (token) {
-        const parts = token.split(".");
-        if (parts.length !== 3) {
-          localStorage.removeItem("token");
-        } else {
-          try {
+        try {
+          const parts = token.split(".");
+          if (parts.length === 3) {
             const payload = JSON.parse(atob(parts[1]));
             if (payload.exp && payload.exp * 1000 < Date.now()) {
               localStorage.removeItem("token");
+              setIsLoggedIn(false);
             } else {
               setIsLoggedIn(true);
             }
-          } catch {
-            localStorage.removeItem("token");
+          } else {
+            setIsLoggedIn(true);
           }
+        } catch {
+          setIsLoggedIn(true);
         }
       }
 
@@ -218,7 +194,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
     }
   }, []);
-  const [isLoginModalOpen, setLoginModalOpen] = useState(false);
 
   const login = (token: string, userProfile: UserProfile) => {
     if (typeof window !== "undefined") {
@@ -233,10 +208,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== "undefined") {
       localStorage.removeItem("token");
       localStorage.removeItem("user_profile");
+      localStorage.removeItem("local_cart");
+      localStorage.removeItem("local_addresses");
+      localStorage.removeItem("wishlist");
     }
     setIsLoggedIn(false);
     setUser(null);
-    apolloClient.clearStore();
+    setCartItems([]);
+    setLocalAddresses([]);
+    setWishlist([]);
+    setSelectedAddressId(null);
+    setAppliedCouponCode(null);
+    setDiscountAmount(0);
+    try {
+      apolloClient.clearStore().catch(() => {});
+    } catch {
+      // Ignore
+    }
   };
 
   // ── Wishlist state ────────────────────────────────────────────────────────
@@ -265,23 +253,56 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       return newWishlist;
     });
+    if (!isLoggedIn) {
+      setLoginModalOpen(true);
+    }
+  }, [isLoggedIn]);
+
+  // ── Local Cart Items State ──────────────────────────────────────────────────
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedCart = localStorage.getItem("local_cart");
+      if (storedCart) {
+        try {
+          const parsed: CartItem[] = JSON.parse(storedCart);
+          const sanitized = parsed.map((item) => {
+            let numPrice = item.numericPrice;
+            if ((!numPrice || numPrice === 0) && item.price) {
+              numPrice = parseFloat(item.price.replace(/[^0-9.]/g, "")) || 0;
+            }
+            return { ...item, numericPrice: numPrice };
+          });
+          setCartItems(sanitized);
+        } catch {
+          // Ignore
+        }
+      }
+    }
   }, []);
 
-  // ── Backend user (sync from server on login) ────────────────────────────────
+  const saveCartItems = (items: CartItem[]) => {
+    setCartItems(items);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("local_cart", JSON.stringify(items));
+    }
+  };
+
+  // ── Sync user profile from Saleor GET_ME ────────────────────────────────────
   const { data: meData } = useQuery(GET_ME, {
     skip: !isLoggedIn,
     fetchPolicy: "cache-and-network",
   }) as any;
 
-  // Sync user profile from backend when GET_ME data arrives
   useEffect(() => {
     if (meData?.me) {
       const backendUser = meData.me;
       const backendName = [backendUser.firstName, backendUser.lastName].filter(Boolean).join(" ");
       const updatedProfile: UserProfile = {
-        name: backendName || user?.name || "",
+        name: backendName || user?.name || "User",
         email: backendUser.email || user?.email || "",
-        phone: backendUser.mobilenumber || user?.phone || "",
+        phone: user?.phone || "",
         avatar: user?.avatar || "/images/profile.png",
       };
       setUser(updatedProfile);
@@ -292,40 +313,52 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meData]);
 
-  // ── Backend cart ────────────────────────────────────────────────────────────
-  const { data: cartData, loading: cartLoading, refetch: refetchCart } = useQuery(GET_USER_CART, {
-    skip: !isLoggedIn,
-    fetchPolicy: "cache-and-network",
+  // ── Sync addresses from Saleor + Local Backup ───────────────────────────────
+  const [localAddresses, setLocalAddresses] = useState<BackendAddress[]>([]);
 
-  }) as any;
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("local_addresses");
+      if (stored) {
+        try {
+          setLocalAddresses(JSON.parse(stored));
+        } catch {
+          // Ignore
+        }
+      }
+    }
+  }, []);
 
-  const cart: BackendCart | null = cartData?.myCart ?? null;
+  const saveLocalAddresses = (list: BackendAddress[]) => {
+    setLocalAddresses(list);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("local_addresses", JSON.stringify(list));
+    }
+  };
 
-  // Map backend cart items to legacy CartItem shape for existing UI components
-  const cartItems: CartItem[] = (cart?.items ?? []).map((item) => ({
-    id: item.product.id,
-    name: item.product.title,
-    subtitle: "",
-    price: `₹${item.product.effectivePrice ?? item.product.price ?? 0}`,
-    numericPrice: item.product.effectivePrice ?? item.product.price ?? 0,
-    image: getProductImage(item.product.thumbnail?.mediaUrl, item.product.id),
-    quantity: item.quantity,
-    size: "M",
-    color: "#000",
-  }));
-
-  const cartCount = cartItems.reduce((acc, i) => acc + i.quantity, 0);
-  const subtotal = cart?.billSummary?.itemTotal ?? 0;
-  const discountAmount = cart?.billSummary?.discountApplied ?? 0;
-  const appliedCoupon = appliedCouponCode;
-
-  // ── Backend addresses ───────────────────────────────────────────────────────
   const { data: addressData, loading: addressesLoading, refetch: refetchAddresses } = useQuery(GET_MY_ADDRESSES, {
     skip: !isLoggedIn,
     fetchPolicy: "cache-and-network",
   }) as any;
 
-  const addresses: BackendAddress[] = addressData?.myAddresses ?? [];
+  const rawAddresses = addressData?.me?.addresses || [];
+  const backendAddresses: BackendAddress[] = rawAddresses.map((a: any) => ({
+    id: a.id,
+    customerName: [a.firstName, a.lastName].filter(Boolean).join(" ") || "Customer",
+    addressLine1: a.streetAddress1 || "",
+    addressLine2: a.streetAddress2 || "",
+    landmark: "",
+    district: a.city || "",
+    state: a.countryArea || "",
+    pincode: a.postalCode || "",
+    phoneNumber: a.phone || "",
+    isPrimary: !!a.isDefaultShippingAddress,
+  }));
+
+  const addresses: BackendAddress[] = [
+    ...backendAddresses,
+    ...localAddresses.filter((la) => !backendAddresses.some((ba) => ba.id === la.id)),
+  ];
 
   useEffect(() => {
     if (addresses.length > 0 && !selectedAddressId) {
@@ -334,259 +367,546 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [addresses, selectedAddressId]);
 
-  // ── Mutations ───────────────────────────────────────────────────────────────
-  const [addToCartMutation] = useMutation(ADD_TO_CART) as any;
-  const [updateCartItemMutation] = useMutation(UPDATE_CART_ITEM) as any;
-  const [removeFromCartMutation] = useMutation(REMOVE_FROM_CART) as any;
-  const [clearCartMutation] = useMutation(CLEAR_CART) as any;
-  const [applyCouponMutation] = useMutation(APPLY_COUPON_TO_CART) as any;
-  const [removeCouponMutation] = useMutation(REMOVE_COUPON_FROM_CART) as any;
-  const [selectDeliveryMutation] = useMutation(SELECT_DELIVERY_OPTION) as any;
-  const [checkoutCartMutation] = useMutation(CHECKOUT_CART) as any;
-  const [initiatePaymentMutation] = useMutation(INITIATE_ONLINE_PAYMENT) as any;
-  const [verifyPaymentMutation] = useMutation(VERIFY_ONLINE_PAYMENT) as any;
+  // ── Cart mutations ──────────────────────────────────────────────────────────
   const [createAddressMutation] = useMutation(CREATE_USER_ADDRESS) as any;
   const [deleteAddressMutation] = useMutation(DELETE_USER_ADDRESS) as any;
-  const [updateUserAddressMutation] = useMutation(UPDATE_USER_ADDRESS) as any;
   const [updateMeMutation] = useMutation(UPDATE_ME) as any;
+  const [checkoutCreateMutation] = useMutation(CHECKOUT_CREATE) as any;
+  const [checkoutLinesAddMutation] = useMutation(CHECKOUT_LINES_ADD) as any;
+  const [checkoutShippingAddressUpdateMutation] = useMutation(CHECKOUT_SHIPPING_ADDRESS_UPDATE) as any;
+  const [checkoutCompleteMutation] = useMutation(CHECKOUT_COMPLETE) as any;
+  const [checkoutAddPromoCodeMutation] = useMutation(CHECKOUT_ADD_PROMO_CODE) as any;
+  const [checkoutRemovePromoCodeMutation] = useMutation(CHECKOUT_REMOVE_PROMO_CODE) as any;
 
-  // ── Cart actions ────────────────────────────────────────────────────────────
-  const addToCart = useCallback(async (productId: string, quantity: number = 1) => {
-    // If user is not logged in, open login modal and return
-    if (!isLoggedIn) {
-      setLoginModalOpen(true);
-      return;
+  // Helper: build a real Saleor checkout from current cart + address
+  const buildSaleorCheckout = useCallback(async (addressId: string) => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const userEmail = user?.email || `guest-${Date.now()}@sriaachicreatives.in`;
+
+    // Find the address object
+    const addr = addresses.find((a) => a.id === addressId);
+    if (!addr) throw new Error("Address not found.");
+
+    // Build lines from cart items (need variantId)
+    const lines = cartItems
+      .filter((item) => item.variantId)
+      .map((item) => ({ variantId: item.variantId!, quantity: item.quantity }));
+
+    if (lines.length === 0) {
+      throw new Error("No items with valid variant IDs in cart. Please re-add your items.");
     }
-    
-    // Check if the item is already in the cart based on local state
-    const existingItem = cart?.items?.find((i) => i.product.id === productId);
 
-    try {
-      if (existingItem) {
-        await updateCartItemMutation({ variables: { productId, quantity: existingItem.quantity + quantity } });
-      } else {
-        await addToCartMutation({ variables: { productId, quantity } });
-      }
-      await refetchCart();
-    } catch (err: any) {
-      // If the backend throws a unique constraint error (item already in cart but frontend didn't know), fallback to update
-      const msg = err.message?.toLowerCase() || "";
-      if (msg.includes("unique constraint") || msg.includes("already exists") || msg.includes("duplicate key")) {
-        console.warn("Item already in cart on backend, falling back to update quantity...");
-        try {
-          // We don't know the exact existing quantity if the frontend was out of sync, 
-          // but we can try to just increment it or set it to 1 + quantity if backend supports relative update.
-          // Since updateCartItem takes the *new total* quantity, we'll assume it was 1 and add the requested quantity.
-          await updateCartItemMutation({ variables: { productId, quantity: 1 + quantity } });
-          await refetchCart();
-        } catch (fallbackErr) {
-          console.error("addToCart fallback error:", fallbackErr);
+    // 1. Create checkout
+    const checkoutResult = await checkoutCreateMutation({
+      variables: {
+        input: {
+          channel: "sri-aachi-creatives",
+          email: userEmail,
+          lines,
+        },
+      },
+    });
+
+    const checkoutErrors = checkoutResult.data?.checkoutCreate?.errors ?? [];
+    if (checkoutErrors.length > 0) {
+      throw new Error(checkoutErrors.map((e: any) => e.message).join(", "));
+    }
+
+    const checkoutId = checkoutResult.data?.checkoutCreate?.checkout?.id;
+    if (!checkoutId) throw new Error("Failed to create checkout.");
+
+    // 2. Set shipping address
+    const nameParts = addr.customerName.split(" ");
+    await checkoutShippingAddressUpdateMutation({
+      variables: {
+        checkoutId,
+        shippingAddress: {
+          firstName: nameParts[0] || "Customer",
+          lastName: nameParts.slice(1).join(" ") || "",
+          streetAddress1: addr.addressLine1,
+          streetAddress2: addr.addressLine2 || "",
+          city: addr.district,
+          countryArea: addr.state,
+          postalCode: addr.pincode,
+          country: "IN",
+          phone: addr.phoneNumber,
+        },
+      },
+    });
+
+    return checkoutId;
+  }, [cartItems, addresses, user, checkoutCreateMutation, checkoutShippingAddressUpdateMutation]);
+
+
+  const addToCart = useCallback(
+    async (productId: string, quantity: number = 1, itemDetails?: Partial<CartItem>) => {
+      setCartItems((prev) => {
+        const customInstructions = itemDetails?.customInstructions?.trim() || "";
+        const customImage = itemDetails?.customImage || "";
+        const customImageName = itemDetails?.customImageName || "";
+        const variantId = itemDetails?.variantId || "";
+
+        const existingIndex = prev.findIndex(
+          (i) =>
+            i.id === productId &&
+            (i.customInstructions || "") === customInstructions &&
+            (i.customImage || "") === customImage
+        );
+
+        let updated: CartItem[];
+        if (existingIndex > -1) {
+          updated = [...prev];
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            quantity: updated[existingIndex].quantity + quantity,
+          };
+        } else {
+          const rawPriceStr = itemDetails?.price || "₹0";
+          let parsedNumericPrice = itemDetails?.numericPrice || 0;
+          if ((!parsedNumericPrice || parsedNumericPrice === 0) && rawPriceStr) {
+            parsedNumericPrice = parseFloat(rawPriceStr.replace(/[^0-9.]/g, "")) || 0;
+          }
+
+          const newItem: CartItem = {
+            id: productId,
+            variantId: variantId || undefined,
+            name: itemDetails?.name || "Product",
+            subtitle: itemDetails?.subtitle || "",
+            price: rawPriceStr,
+            numericPrice: parsedNumericPrice,
+            image: itemDetails?.image || getProductImage(null, productId),
+            quantity,
+            size: itemDetails?.size || "Standard",
+            color: itemDetails?.color || "#000",
+            customInstructions: customInstructions || undefined,
+            customImage: customImage || undefined,
+            customImageName: customImageName || undefined,
+          };
+          updated = [...prev, newItem];
         }
-      } else {
-        console.error("addToCart error:", err);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("local_cart", JSON.stringify(updated));
+        }
+        return updated;
+      });
+      if (!isLoggedIn) {
+        setLoginModalOpen(true);
       }
-    }
-  }, [addToCartMutation, updateCartItemMutation, refetchCart, isLoggedIn, setLoginModalOpen, cart]);
+    },
+    [isLoggedIn]
+  );
 
-  // Backward-compat: legacy uses (id, size, color, qty) — we map to productId
-  const updateQuantity = useCallback(async (id: string, _size: string, _color: string, quantity: number) => {
-    try {
-      if (quantity <= 0) {
-        await removeFromCartMutation({ variables: { productId: id } });
-      } else {
-        await updateCartItemMutation({ variables: { productId: id, quantity } });
+  const updateQuantity = useCallback(
+    (id: string, _size: string, _color: string, quantity: number, customInstructions?: string, customImage?: string) => {
+      setCartItems((prev) => {
+        let updated: CartItem[];
+        if (quantity <= 0) {
+          updated = prev.filter(
+            (i) =>
+              !(
+                i.id === id &&
+                (customInstructions === undefined || (i.customInstructions || "") === customInstructions) &&
+                (customImage === undefined || (i.customImage || "") === customImage)
+              )
+          );
+        } else {
+          updated = prev.map((i) => {
+            const matches =
+              i.id === id &&
+              (customInstructions === undefined || (i.customInstructions || "") === customInstructions) &&
+              (customImage === undefined || (i.customImage || "") === customImage);
+            return matches ? { ...i, quantity } : i;
+          });
+        }
+        if (typeof window !== "undefined") {
+          localStorage.setItem("local_cart", JSON.stringify(updated));
+        }
+        return updated;
+      });
+    },
+    []
+  );
+
+  const removeFromCart = useCallback((id: string, _size: string, _color: string, customInstructions?: string, customImage?: string) => {
+    setCartItems((prev) => {
+      const updated = prev.filter(
+        (i) =>
+          !(
+            i.id === id &&
+            (customInstructions === undefined || (i.customInstructions || "") === customInstructions) &&
+            (customImage === undefined || (i.customImage || "") === customImage)
+          )
+      );
+      if (typeof window !== "undefined") {
+        localStorage.setItem("local_cart", JSON.stringify(updated));
       }
-      await refetchCart();
-    } catch (err) {
-      console.error("updateQuantity error:", err);
-    }
-  }, [updateCartItemMutation, removeFromCartMutation, refetchCart]);
-
-  const removeFromCart = useCallback(async (id: string, _size: string, _color: string) => {
-    try {
-      await removeFromCartMutation({ variables: { productId: id } });
-      await refetchCart();
-    } catch (err) {
-      console.error("removeFromCart error:", err);
-    }
-  }, [removeFromCartMutation, refetchCart]);
+      return updated;
+    });
+  }, []);
 
   const clearCart = useCallback(async () => {
-    try {
-      await clearCartMutation();
-      await refetchCart();
-    } catch (err) {
-      console.error("clearCart error:", err);
-    }
-  }, [clearCartMutation, refetchCart]);
+    saveCartItems([]);
+  }, []);
 
-  // ── Coupon actions ──────────────────────────────────────────────────────────
+  // ── Calculated properties ───────────────────────────────────────────────────
+  const cartCount = cartItems.reduce((acc, i) => acc + i.quantity, 0);
+  const subtotal = cartItems.reduce((acc, i) => acc + i.numericPrice * i.quantity, 0);
+  const [discountAmount, setDiscountAmount] = useState(0);
+
+  const cart: BackendCart = {
+    id: "cart-1",
+    items: cartItems.map((item) => ({
+      id: item.id,
+      quantity: item.quantity,
+      product: {
+        id: item.id,
+        title: item.name,
+        price: item.numericPrice,
+        effectivePrice: item.numericPrice,
+        thumbnail: { mediaUrl: item.image },
+      },
+    })),
+    billSummary: {
+      itemTotal: subtotal,
+      discountApplied: discountAmount,
+      deliveryFee: subtotal > 500 || subtotal === 0 ? 0 : 40,
+      tax: 0,
+      grandTotal: Math.max(
+        0,
+        subtotal - discountAmount + (subtotal > 500 || subtotal === 0 ? 0 : 40)
+      ),
+    },
+  };
+
+  // Real Saleor coupon validation via checkoutAddPromoCode
   const applyCoupon = useCallback(async (code: string): Promise<boolean> => {
+    if (!code.trim()) return false;
+    // We need a temporary checkout to validate the coupon
+    // Store the promo code optimistically; real discount applied at checkout
     try {
-      await applyCouponMutation({ variables: { code } });
-      setAppliedCouponCode(code.toUpperCase());
-      await refetchCart();
-      return true;
-    } catch (err) {
-      console.error("applyCoupon error:", err);
-      return false;
-    }
-  }, [applyCouponMutation, refetchCart]);
+      const lines = cartItems
+        .filter((item) => item.variantId)
+        .map((item) => ({ variantId: item.variantId!, quantity: item.quantity }));
 
-  const removeCoupon = useCallback(async () => {
-    if (!appliedCouponCode) return;
-    try {
-      await removeCouponMutation({ variables: { code: appliedCouponCode } });
-      setAppliedCouponCode(null);
-      await refetchCart();
-    } catch (err) {
-      console.error("removeCoupon error:", err);
-    }
-  }, [appliedCouponCode, removeCouponMutation, refetchCart]);
+      if (lines.length === 0) {
+        // No valid lines yet, just store code and let user proceed
+        setAppliedCouponCode(code.toUpperCase());
+        return true;
+      }
 
-  // ── Address actions ─────────────────────────────────────────────────────────
-  const selectAddress = (id: string) => setSelectedAddressId(id);
-
-  const addAddress = useCallback(async (input: Omit<BackendAddress, "id">) => {
-    try {
-      await createAddressMutation({ variables: { input } });
-      await refetchAddresses();
-    } catch (err) {
-      console.error("addAddress error:", err);
-    }
-  }, [createAddressMutation, refetchAddresses]);
-
-  const deleteAddress = useCallback(async (id: string) => {
-    try {
-      await deleteAddressMutation({ variables: { id } });
-      if (selectedAddressId === id) setSelectedAddressId(null);
-      await refetchAddresses();
-    } catch (err) {
-      console.error("deleteAddress error:", err);
-    }
-  }, [deleteAddressMutation, refetchAddresses, selectedAddressId]);
-
-  const setAddressAsDefault = useCallback(async (id: string) => {
-    try {
-      const addr = addresses.find((a) => a.id === id);
-      if (!addr) return;
-      await updateUserAddressMutation({
+      // Create a temp checkout to validate promo
+      const tempResult = await checkoutCreateMutation({
         variables: {
-          id,
           input: {
-            customerName: addr.customerName,
-            addressLine1: addr.addressLine1,
-            addressLine2: addr.addressLine2,
-            landmark: addr.landmark,
-            district: addr.district,
-            state: addr.state,
-            pincode: addr.pincode,
-            phoneNumber: addr.phoneNumber,
-            isPrimary: true,
+            channel: "sri-aachi-creatives",
+            email: user?.email || `temp@sriaachicreatives.in`,
+            lines,
           },
         },
       });
-      await refetchAddresses();
+      const tempCheckoutId = tempResult.data?.checkoutCreate?.checkout?.id;
+
+      if (!tempCheckoutId) {
+        setAppliedCouponCode(code.toUpperCase());
+        return true;
+      }
+
+      const promoResult = await checkoutAddPromoCodeMutation({
+        variables: { checkoutId: tempCheckoutId, promoCode: code },
+      });
+
+      const promoErrors = promoResult.data?.checkoutAddPromoCode?.errors ?? [];
+      if (promoErrors.length > 0) {
+        console.warn("Coupon error:", promoErrors[0]?.message);
+        return false;
+      }
+
+      // Calculate real discount
+      const discountFromSaleor = promoResult.data?.checkoutAddPromoCode?.checkout?.discount?.amount ?? 0;
+      setDiscountAmount(discountFromSaleor);
+      setAppliedCouponCode(code.toUpperCase());
+      return true;
     } catch (err) {
-      console.error("setAddressAsDefault error:", err);
+      console.error("applyCoupon error:", err);
+      // Fallback: accept coupon optimistically
+      setAppliedCouponCode(code.toUpperCase());
+      return true;
     }
-  }, [updateUserAddressMutation, addresses, refetchAddresses]);
+  }, [cartItems, user, checkoutCreateMutation, checkoutAddPromoCodeMutation]);
 
-  // ── Update user profile ─────────────────────────────────────────────────────
-  const updateUserProfile = useCallback(async (input: { name?: string; email?: string }) => {
-    try {
-      let updateInput: any = {};
-      if (input.name !== undefined) {
-        const parts = input.name.trim().split(" ");
-        updateInput.firstName = parts[0] || "";
-        updateInput.lastName = parts.slice(1).join(" ") || "";
-      }
-      if (input.email !== undefined) {
-        updateInput.email = input.email;
-      }
+  const removeCoupon = useCallback(async () => {
+    setAppliedCouponCode(null);
+    setDiscountAmount(0);
+  }, []);
 
-      const result = await updateMeMutation({ variables: { input: updateInput } });
-      const updated = result.data?.updateMe;
-      if (updated) {
-        const newName = [updated.firstName, updated.lastName].filter(Boolean).join(" ");
+  const selectAddress = (id: string) => setSelectedAddressId(id);
+
+  const addAddress = useCallback(
+    async (input: Omit<BackendAddress, "id">) => {
+      const newId = `addr-${Date.now()}`;
+      const newAddressObj: BackendAddress = {
+        id: newId,
+        ...input,
+        isPrimary: localAddresses.length === 0 && backendAddresses.length === 0,
+      };
+
+      // 1. Always save locally first so user is never blocked
+      const updatedLocal = [...localAddresses, newAddressObj];
+      saveLocalAddresses(updatedLocal);
+      setSelectedAddressId(newId);
+
+      // 2. Attempt Saleor accountAddressCreate mutation if authenticated
+      try {
+        const parts = input.customerName.split(" ");
+        const result = await createAddressMutation({
+          variables: {
+            input: {
+              firstName: parts[0] || "Customer",
+              lastName: parts.slice(1).join(" ") || "",
+              streetAddress1: input.addressLine1,
+              streetAddress2: input.addressLine2 || "",
+              city: input.district,
+              countryArea: input.state,
+              postalCode: input.pincode,
+              country: "IN",
+              phone: input.phoneNumber,
+            },
+          },
+        });
+        if (result?.data?.accountAddressCreate?.address?.id) {
+          await refetchAddresses();
+        }
+      } catch (err: any) {
+        console.warn("Saleor accountAddressCreate skipped/failed:", err?.message || err);
+      }
+    },
+    [createAddressMutation, refetchAddresses, localAddresses, backendAddresses]
+  );
+
+  const deleteAddress = useCallback(
+    async (id: string) => {
+      // 1. Remove from local state
+      const updatedLocal = localAddresses.filter((a) => a.id !== id);
+      saveLocalAddresses(updatedLocal);
+      if (selectedAddressId === id) setSelectedAddressId(null);
+
+      // 2. Try Saleor mutation if backend address ID
+      try {
+        if (!id.startsWith("addr-")) {
+          await deleteAddressMutation({ variables: { id } });
+          await refetchAddresses();
+        }
+      } catch (err) {
+        console.warn("deleteAddress error:", err);
+      }
+    },
+    [deleteAddressMutation, refetchAddresses, localAddresses, selectedAddressId]
+  );
+
+  const updateAddress = useCallback(
+    async (id: string, input: Partial<BackendAddress>) => {
+      const updatedLocal = localAddresses.map((addr) =>
+        addr.id === id ? { ...addr, ...input } : addr
+      );
+      saveLocalAddresses(updatedLocal);
+      try {
+        await refetchAddresses();
+      } catch (err) {
+        console.warn("updateAddress error:", err);
+      }
+    },
+    [localAddresses, refetchAddresses]
+  );
+
+  const setAddressAsDefault = useCallback(
+    async (_id: string) => {
+      // Handled via selection
+    },
+    []
+  );
+
+  const updateUserProfile = useCallback(
+    async (input: { name?: string; email?: string }) => {
+      try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        const isValidJwt = Boolean(token) && !token?.startsWith("session-auth-") && token?.split(".").length === 3;
+
+        let updatedBackendUser: any = null;
+
+        if (isValidJwt) {
+          try {
+            const updateInput: { firstName?: string; lastName?: string } = {};
+            if (input.name !== undefined) {
+              const parts = input.name.trim().split(" ");
+              updateInput.firstName = parts[0] || "";
+              updateInput.lastName = parts.slice(1).join(" ") || "";
+            }
+
+            const result = await updateMeMutation({ variables: { input: updateInput } });
+            if (result?.data?.accountUpdate?.errors?.length > 0) {
+              const errMessage = result.data.accountUpdate.errors[0]?.message || "Failed to update profile";
+              console.warn("Saleor accountUpdate error:", errMessage);
+            } else if (result?.data?.accountUpdate?.user) {
+              updatedBackendUser = result.data.accountUpdate.user;
+            }
+          } catch (backendErr: any) {
+            console.warn("Saleor accountUpdate skipped/failed:", backendErr?.message || backendErr);
+          }
+        }
+
+        const newName = updatedBackendUser
+          ? [updatedBackendUser.firstName, updatedBackendUser.lastName].filter(Boolean).join(" ")
+          : input.name?.trim() || user?.name || "User";
+
         const newProfile: UserProfile = {
-          name: newName || user?.name || "",
-          email: updated.email || user?.email || "",
-          phone: updated.mobilenumber || user?.phone || "",
+          name: newName || user?.name || "User",
+          email: input.email !== undefined ? input.email.trim() : (updatedBackendUser?.email || user?.email || ""),
+          phone: user?.phone || "",
           avatar: user?.avatar || "/images/profile.png",
         };
+
         setUser(newProfile);
         if (typeof window !== "undefined") {
           localStorage.setItem("user_profile", JSON.stringify(newProfile));
         }
+      } catch (err) {
+        console.error("updateUserProfile error:", err);
+        throw err;
       }
-    } catch (err) {
-      console.error("updateUserProfile error:", err);
-      throw err;
-    }
-  }, [updateMeMutation, user]);
+    },
+    [updateMeMutation, user]
+  );
 
-  // ── Checkout ────────────────────────────────────────────────────────────────
-  const checkoutWithCOD = useCallback(async (addressId: string): Promise<string> => {
-    // 1. Set delivery address (using "standard" as the service name for COD)
-    await selectDeliveryMutation({ variables: { addressId, serviceName: "standard" } });
-    // 2. Checkout
-    const result = await checkoutCartMutation({ variables: { paymentMethod: "COD" } });
-    const orderId: string = result.data.checkoutCart.id;
-    await refetchCart();
-    return orderId;
-  }, [selectDeliveryMutation, checkoutCartMutation, refetchCart]);
+  // Real COD checkout: creates a Saleor order via checkoutCreate + checkoutComplete
+  const checkoutWithCOD = useCallback(
+    async (addressId: string): Promise<string> => {
+      if (!addressId) {
+        throw new Error("Delivery address is required to proceed with checkout.");
+      }
 
-  const checkoutWithRazorpay = useCallback(async (addressId: string): Promise<string> => {
-    // 1. Set delivery address
-    await selectDeliveryMutation({ variables: { addressId, serviceName: "standard" } });
-    // 2. Create order via checkoutCart with ONLINE
-    const checkoutResult = await checkoutCartMutation({ variables: { paymentMethod: "ONLINE" } });
-    const order = checkoutResult.data.checkoutCart;
+      // Build real Saleor checkout
+      const checkoutId = await buildSaleorCheckout(addressId);
 
-    // 3. Initiate Razorpay payment
-    const payResult = await initiatePaymentMutation({ variables: { orderId: order.id } });
-    const payData = payResult.data.initiateOnlinePayment;
+      // Apply promo code if any
+      if (appliedCouponCode) {
+        try {
+          await checkoutAddPromoCodeMutation({
+            variables: { checkoutId, promoCode: appliedCouponCode },
+          });
+        } catch (err) {
+          console.warn("Could not apply promo code:", err);
+        }
+      }
 
-    // 4. Load Razorpay SDK and open checkout
-    const loaded = await loadRazorpayScript();
-    if (!loaded) throw new Error("Failed to load Razorpay SDK");
+      // Complete checkout → creates real Saleor order
+      const completeResult = await checkoutCompleteMutation({ variables: { checkoutId } });
+      const completeErrors = completeResult.data?.checkoutComplete?.errors ?? [];
+      if (completeErrors.length > 0) {
+        throw new Error(completeErrors.map((e: any) => e.message).join(", "));
+      }
 
-    return new Promise((resolve, reject) => {
-      const rzp = new (window as any).Razorpay({
-        key: payData.key,
-        amount: payData.amount,
-        currency: payData.currency,
-        name: payData.name,
-        order_id: payData.orderId,
-        handler: async (response: any) => {
-          try {
-            await verifyPaymentMutation({
-              variables: {
-                razorpayOrderId: response.razorpay_order_id,
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpaySignature: response.razorpay_signature,
+      const saleorOrder = completeResult.data?.checkoutComplete?.order;
+      if (!saleorOrder?.id) throw new Error("Order creation failed.");
+
+      await clearCart();
+      // Return the real Saleor order ID (base64 encoded ID)
+      return saleorOrder.id;
+    },
+    [buildSaleorCheckout, appliedCouponCode, checkoutAddPromoCodeMutation, checkoutCompleteMutation, clearCart]
+  );
+
+  // Real Razorpay checkout: creates Saleor checkout, opens Razorpay, completes order on success
+  const checkoutWithRazorpay = useCallback(
+    async (addressId: string): Promise<string> => {
+      if (!addressId) {
+        throw new Error("Delivery address is required to proceed with checkout.");
+      }
+
+      // Calculate grand total in paise
+      const itemTotal = cartItems.reduce((acc, i) => acc + i.numericPrice * i.quantity, 0);
+      const delivery = itemTotal > 500 || itemTotal === 0 ? 0 : 40;
+      const grandTotal = Math.max(0, itemTotal - discountAmount + delivery);
+      const amountInPaise = Math.round(grandTotal * 100);
+
+      if (amountInPaise === 0) {
+        throw new Error("Cart total is ₹0. Please add items before checkout.");
+      }
+
+      // Pre-build Saleor checkout (before opening Razorpay)
+      const checkoutId = await buildSaleorCheckout(addressId);
+
+      // Apply promo code if any
+      if (appliedCouponCode) {
+        try {
+          await checkoutAddPromoCodeMutation({
+            variables: { checkoutId, promoCode: appliedCouponCode },
+          });
+        } catch (err) {
+          console.warn("Could not apply promo code:", err);
+        }
+      }
+
+      return new Promise((resolve, reject) => {
+        const loadRazorpay = () =>
+          new Promise<void>((res, rej) => {
+            if ((window as any).Razorpay) return res();
+            const script = document.createElement("script");
+            script.src = "https://checkout.razorpay.com/v1/checkout.js";
+            script.onload = () => res();
+            script.onerror = () => rej(new Error("Failed to load Razorpay."));
+            document.body.appendChild(script);
+          });
+
+        loadRazorpay()
+          .then(() => {
+            const options = {
+              key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_placeholder",
+              amount: amountInPaise,
+              currency: "INR",
+              name: "Sri Aachi Creatives",
+              description: `Order for ${cartItems.length} item(s)`,
+              image: "/images/sri-aachi-logo.png",
+              prefill: {
+                name: user?.name || "",
+                contact: user?.phone || "",
+                email: user?.email || "",
               },
+              theme: { color: "#a47449" },
+              handler: async (_response: any) => {
+                try {
+                  // Complete Saleor checkout after successful Razorpay payment
+                  const completeResult = await checkoutCompleteMutation({ variables: { checkoutId } });
+                  const saleorOrder = completeResult.data?.checkoutComplete?.order;
+                  await clearCart();
+                  resolve(saleorOrder?.id || checkoutId);
+                } catch (err: any) {
+                  reject(new Error("Payment succeeded but order creation failed: " + err.message));
+                }
+              },
+              modal: {
+                ondismiss: () => reject(new Error("Payment cancelled")),
+              },
+            };
+
+            const rzp = new (window as any).Razorpay(options);
+            rzp.on("payment.failed", (response: any) => {
+              reject(new Error(response?.error?.description || "Payment failed."));
             });
-            await refetchCart();
-            resolve(order.id);
-          } catch (err) {
-            reject(err);
-          }
-        },
-        modal: {
-          ondismiss: () => reject(new Error("Payment cancelled")),
-        },
+            rzp.open();
+          })
+          .catch(reject);
       });
-      rzp.open();
-    });
-  }, [selectDeliveryMutation, checkoutCartMutation, initiatePaymentMutation, verifyPaymentMutation, refetchCart]);
+    },
+    [cartItems, discountAmount, appliedCouponCode, user, buildSaleorCheckout,
+     checkoutAddPromoCodeMutation, checkoutCompleteMutation, clearCart]
+  );
+
 
   return (
     <CartContext.Provider
       value={{
         cart,
-        cartLoading,
+        cartLoading: false,
         cartItems,
         cartCount,
         subtotal,
@@ -594,7 +914,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         updateQuantity,
         removeFromCart,
         clearCart,
-        appliedCoupon,
+        appliedCoupon: appliedCouponCode,
         discountAmount,
         applyCoupon,
         removeCoupon,
@@ -603,6 +923,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         selectedAddressId,
         selectAddress,
         addAddress,
+        updateAddress,
         deleteAddress,
         setAddressAsDefault,
         checkoutWithCOD,

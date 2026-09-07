@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@apollo/client/react";
 import { ChevronRight } from "lucide-react";
 import { GET_CATEGORIES } from "@/graphql/queries";
+import { resolveProductImage } from "@/utils/productImages";
 import styles from "./CategoryGridHome.module.css";
 
 export default function CategoryGridHome() {
@@ -27,12 +28,19 @@ export default function CategoryGridHome() {
     return gradients[sum % gradients.length];
   };
 
-  const categories = useMemo(() => data?.categories?.map((c: any) => ({
-    id: c.id,
-    name: c.title,
-    image: c.thumbnail?.mediaUrl,
-    gradient: getGradient(c.id),
-  })) || [], [data]);
+  const categories = useMemo(() => {
+    const raw =
+      data?.categories?.edges?.map((e: any) => e.node) ||
+      (Array.isArray(data?.categories) ? data.categories : []);
+    return raw
+      .filter((c: any) => (c.name || c.title || "").toLowerCase().trim() !== "default category")
+      .map((c: any) => ({
+        id: c.id,
+        name: c.name || c.title || "Category",
+        image: resolveProductImage(c.backgroundImage?.url || c.thumbnail?.mediaUrl, c.name, c.id),
+        gradient: getGradient(c.id),
+      }));
+  }, [data]);
 
   const handleCategorySelect = (id: string) => {
     router.push(`/products?category=${id}`);

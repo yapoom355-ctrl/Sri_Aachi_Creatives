@@ -10,6 +10,7 @@ import BottomNav from "@/components/BottomNav";
 import { GET_PRODUCTS, GET_CATEGORIES } from "@/graphql/queries";
 import { Search } from "lucide-react";
 import styles from "./page.module.css";
+import { resolveProductImage } from "@/utils/productImages";
 import { Product } from "@/types";
 
 function ExploreProductsContent() {
@@ -20,47 +21,40 @@ function ExploreProductsContent() {
   const { data, loading } = useQuery<any>(GET_PRODUCTS, { fetchPolicy: "cache-first" });
   const { data: categoryData } = useQuery<any>(GET_CATEGORIES, { fetchPolicy: "cache-first" });
 
-  // Fallback images
-  const FALLBACK_IMAGES = [
-    "/images/resin-art-block.webp",
-    "/images/resin-table.webp",
-    "/images/photo-frame.webp",
-    "/images/motor-engine-table.webp",
-    "/images/motor-engine-table-3.webp"
-  ];
-
-  const getProductImage = (thumbnailUrl?: string | null, id?: string) => {
-    if (thumbnailUrl) {
-      return thumbnailUrl;
-    }
-    const idStr = id || "";
-    let sum = 0;
-    for (let i = 0; i < idStr.length; i++) {
-      sum += idStr.charCodeAt(i);
-    }
-    return FALLBACK_IMAGES[sum % FALLBACK_IMAGES.length];
-  };
-
-  // Map backend ProductType to frontend Product interface
+  // Map Saleor products to frontend Product interface
   const PRODUCTS: Product[] = useMemo(() => {
-    return data?.products?.map((p: any, index: number) => ({
-      id: p.id,
-      name: p.title,
-      subtitle: p.subtitle || "",
-      description: p.description || "",
-      price: `₹${p.effectivePrice ?? p.price ?? 0}`,
-      numericPrice: p.effectivePrice || p.price || 0,
-      image: getProductImage(p.thumbnail?.mediaUrl, p.id),
-      category: p.categories?.[0]?.id || "",
-      categoryName: p.categories?.[0]?.title || "",
-      isLiked: false,
-      rating: 5.0,
-      reviewsCount: 1,
-      colors: ["#768067", "#c08457"],
-      sizes: ["M", "L"],
-      limited: false,
-    })) || [];
+    const rawProducts =
+      data?.products?.edges?.map((e: any) => e.node) ||
+      (Array.isArray(data?.products) ? data.products : []);
+
+    return rawProducts.map((p: any) => {
+      const grossPrice = p.pricing?.priceRange?.start?.gross?.amount ?? p.effectivePrice ?? p.price ?? 0;
+      const thumb = p.thumbnail?.url || p.thumbnail?.mediaUrl;
+      return {
+        id: p.id,
+        variantId: p.variants?.[0]?.id,
+        name: p.name || p.title || "Product",
+        subtitle: p.subtitle || p.category?.name || "",
+        description: p.description || "",
+        price: `₹${grossPrice}`,
+        numericPrice: Number(grossPrice),
+        image: resolveProductImage(thumb, `${p.name} ${p.slug}`, p.id),
+        category: p.category?.id || p.categories?.[0]?.id || "",
+        categoryName: p.category?.name || p.categories?.[0]?.title || "",
+        isLiked: false,
+        colors: ["#768067", "#c08457"],
+        sizes: ["M", "L"],
+        limited: false,
+      };
+    });
   }, [data]);
+
+  const rawCategories = useMemo(() => {
+    const raw =
+      categoryData?.categories?.edges?.map((e: any) => e.node) ||
+      (Array.isArray(categoryData?.categories) ? categoryData.categories : []);
+    return raw.filter((c: any) => !(c.name || c.title || "").toLowerCase().includes("default category"));
+  }, [categoryData]);
 
   const filteredByCategory = useMemo(() => {
     return categoryId 
@@ -75,7 +69,7 @@ function ExploreProductsContent() {
   }, [filteredByCategory, searchQuery]);
 
   const activeCategoryName = categoryId 
-    ? categoryData?.categories?.find((c: any) => c.id === categoryId)?.title || "Products"
+    ? rawCategories.find((c: any) => c.id === categoryId)?.name || "Products"
     : "All Products";
 
   return (

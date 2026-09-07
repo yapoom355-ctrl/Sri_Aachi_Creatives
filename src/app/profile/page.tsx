@@ -38,7 +38,7 @@ export default function ProfilePage() {
   const { isLoggedIn, user, logout, setLoginModalOpen, cartCount, updateUserProfile } = useCart();
 
   const { data: ordersData } = useQuery<any>(GET_ORDERS, { skip: !isLoggedIn });
-  const ordersCount = ordersData?.myOrders?.length ?? 0;
+  const ordersCount = ordersData?.me?.orders?.edges?.length ?? ordersData?.myOrders?.length ?? 0;
 
   // Edit profile state
   const [isEditing, setIsEditing] = useState(false);
@@ -93,22 +93,6 @@ export default function ProfilePage() {
       id: "shipping",
       label: "Shipping Addresses",
       icon: <MapPin size={20} strokeWidth={1.8} />,
-    },
-    {
-      id: "payment",
-      label: "Payment Methods",
-      icon: <CreditCard size={20} strokeWidth={1.8} />,
-    },
-    {
-      id: "promos",
-      label: "Promo Codes",
-      icon: <Tag size={20} strokeWidth={1.8} />,
-      badge: "1 Active",
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      icon: <Settings size={20} strokeWidth={1.8} />,
     },
     {
       id: "logout",
@@ -299,10 +283,6 @@ export default function ProfilePage() {
                   <span className={styles.statValue}>{cartCount}</span>
                   <span className={styles.statLabel}>In Cart</span>
                 </div>
-                <div className={styles.statBox}>
-                  <span className={styles.statValue}>0</span>
-                  <span className={styles.statLabel}>Coupons</span>
-                </div>
               </div>
             </div>
 
@@ -318,14 +298,9 @@ export default function ProfilePage() {
                         router.push("/orders");
                       } else if (item.id === "shipping") {
                         router.push("/addresses");
-                      } else if (item.id === "promos") {
-                        alert("Your active promo code is: SAVE10");
-                      } else if (item.id === "payment") {
-                        router.push("/payment");
-                      } else if (item.id === "settings") {
-                        router.push("/settings");
                       } else if (item.id === "logout") {
                         logout();
+                        router.push("/");
                       }
                     }}
                     type="button"

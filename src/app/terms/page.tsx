@@ -35,7 +35,7 @@ export default function TermsPage() {
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>1. Acceptance of Terms</h3>
             <p className={styles.sectionText}>
-              By accessing and placing an order with Gubera Shop, you confirm that you are in agreement with and bound by the terms of service contained in the Terms and Conditions outlined below. These terms apply to the entire website and any email or other type of communication between you and Gubera Shop.
+              By accessing and placing an order with Sri Aachi Creatives, you confirm that you are in agreement with and bound by the terms of service contained in the Terms and Conditions outlined below. These terms apply to the entire website and any email or other type of communication between you and Sri Aachi Creatives.
             </p>
           </section>
 
@@ -63,7 +63,7 @@ export default function TermsPage() {
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>5. Contact Information</h3>
             <p className={styles.sectionText}>
-              For any questions, clarifications, or support requests regarding these Terms and Conditions, please email us at <strong>asha.royden@example.com</strong>.
+              For any questions, clarifications, or support requests regarding these Terms and Conditions, please contact us at <strong>sriaachicreatives@gmail.com</strong> or call <strong>+91 63668 58878</strong>.
             </p>
           </section>
         </div>

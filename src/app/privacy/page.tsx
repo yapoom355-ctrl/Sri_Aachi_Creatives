@@ -49,21 +49,21 @@ export default function PrivacyPage() {
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>3. Information Security</h3>
             <p className={styles.sectionText}>
-              We work hard to protect Gubera Shop and our users from unauthorized access to or unauthorized alteration, disclosure, or destruction of information we hold. We restrict access to personal details only to core functions required to execute shipments.
+              We work hard to protect Sri Aachi Creatives and our users from unauthorized access to or unauthorized alteration, disclosure, or destruction of information we hold. We restrict access to personal details only to core functions required to execute shipments.
             </p>
           </section>
 
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>4. Sharing of Information</h3>
             <p className={styles.sectionText}>
-              We do not share personal information with companies, organizations, or individuals outside of Gubera Shop except in limited circumstances such as fulfilling deliveries via courier agencies or meeting legal requirements.
+              We do not share personal information with companies, organizations, or individuals outside of Sri Aachi Creatives except in limited circumstances such as fulfilling deliveries via courier agencies or meeting legal requirements.
             </p>
           </section>
 
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>5. Contact Information</h3>
             <p className={styles.sectionText}>
-              If you have any questions or concerns regarding our Privacy Policy or data security practices, please contact us at <strong>asha.royden@example.com</strong>.
+              If you have any questions or concerns regarding our Privacy Policy or data security practices, please contact us at <strong>sriaachicreatives@gmail.com</strong> or call <strong>+91 63668 58878</strong>.
             </p>
           </section>
         </div>

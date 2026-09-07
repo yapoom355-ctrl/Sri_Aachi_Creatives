@@ -6,6 +6,8 @@ import CartSidebar from "@/components/CartSidebar";
 import WishlistSidebar from "@/components/WishlistSidebar";
 import LoginModal from "@/components/LoginModal";
 import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
+import Script from "next/script";
 import "./globals.css";
 
 const fellix = localFont({
@@ -92,12 +94,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={fellix.variable}>
       <body>
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
         <ApolloProvider>
           <CartProvider>
             {children}
             <CartSidebar />
             <WishlistSidebar />
             <LoginModal />
+            <WhatsAppButton />
             <Footer />
           </CartProvider>
         </ApolloProvider>

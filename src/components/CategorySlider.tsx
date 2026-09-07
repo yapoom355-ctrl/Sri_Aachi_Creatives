@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@apollo/client/react";
 import { GET_CATEGORIES } from "@/graphql/queries";
+import { resolveProductImage } from "@/utils/productImages";
 import styles from "./CategorySlider.module.css";
 
 interface Category {
@@ -17,13 +18,21 @@ export default function CategorySlider() {
   const [activeCategory, setActiveCategory] = useState("all");
   const { data, loading } = useQuery<any>(GET_CATEGORIES);
 
+  const rawCategories =
+    data?.categories?.edges?.map((e: any) => e.node) ||
+    (Array.isArray(data?.categories) ? data.categories : []);
+
+  const filteredCategories = rawCategories.filter(
+    (c: any) => (c.name || c.title || "").toLowerCase().trim() !== "default category"
+  );
+
   const CATEGORIES: Category[] = [
     { id: "all", name: "All Products" },
-    ...(data?.categories?.map((c: any) => ({
+    ...filteredCategories.map((c: any) => ({
       id: c.id,
-      name: c.title,
-      image: c.thumbnail?.mediaUrl,
-    })) || [])
+      name: c.name || c.title || "Category",
+      image: resolveProductImage(c.backgroundImage?.url || c.thumbnail?.mediaUrl, c.name, c.id),
+    }))
   ];
 
   const handleCategoryClick = (id: string) => {

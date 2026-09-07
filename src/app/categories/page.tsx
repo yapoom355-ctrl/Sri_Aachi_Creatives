@@ -8,6 +8,7 @@ import ProductDetailsHeader from "@/components/ProductDetailsHeader";
 import BottomNav from "@/components/BottomNav";
 import { ChevronRight } from "lucide-react";
 import { GET_CATEGORIES } from "@/graphql/queries";
+import { resolveProductImage } from "@/utils/productImages";
 import styles from "./page.module.css";
 
 export default function AllCategoriesPage() {
@@ -16,22 +17,22 @@ export default function AllCategoriesPage() {
     fetchPolicy: "cache-first",
   });
 
-  const getEmoji = (title: string) => {
-    const t = title.toLowerCase();
-    if (t.includes("hoodie")) return "🧥";
-    if (t.includes("sneak") || t.includes("shoe")) return "👟";
-    if (t.includes("cap") || t.includes("hat")) return "🧢";
-    if (t.includes("shirt") || t.includes("tee")) return "👕";
-    if (t.includes("watch")) return "⌚";
-    if (t.includes("bag")) return "🎒";
-    return "🛍️";
-  };
+  const categories = useMemo(() => {
+    const raw =
+      data?.categories?.edges?.map((e: any) => e.node) ||
+      (Array.isArray(data?.categories) ? data.categories : []);
 
-  const categories = useMemo(() => data?.categories?.map((c: any) => ({
-    id: c.id,
-    name: c.title,
-    image: c.thumbnail?.mediaUrl,
-  })) || [], [data]);
+    const filtered = raw.filter((c: any) => {
+      const name = (c.name || c.title || "").toLowerCase();
+      return name && !name.includes("default category");
+    });
+
+    return filtered.map((c: any) => ({
+      id: c.id,
+      name: c.name || c.title || "Category",
+      image: resolveProductImage(c.backgroundImage?.url || c.thumbnail?.mediaUrl, c.name, c.id),
+    }));
+  }, [data]);
 
   const handleCategorySelect = (id: string) => {
     router.push(`/products?category=${id}`);

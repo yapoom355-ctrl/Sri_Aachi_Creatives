@@ -1,176 +1,221 @@
 import { gql } from "@apollo/client";
 
-// ─── USER AUTH ────────────────────────────────────────────────────────────────
-export const LOGIN_WITH_PASSWORD = gql`
-  mutation LoginWithPassword($emailOrMobile: String!, $password: String!) {
-    loginWithPassword(emailOrMobile: $emailOrMobile, password: $password) {
-      accessToken
-      refreshToken
-      user {
-        id
-        email
-        name
-        mobilenumber
-      }
-    }
-  }
-`;
-
-export const SEND_OTP = gql`
-  mutation SendOtp($mobilenumber: String!) {
-    sendOtp(mobilenumber: $mobilenumber) {
+// ─── USER AUTH & ACCOUNT ──────────────────────────────────────────────────────
+export const OTP_REQUEST = gql`
+  mutation OtpRequest($phone: String!) {
+    otpRequest(phone: $phone) {
       success
-      message
-      otp
+      errors {
+        field
+        message
+        code
+      }
     }
   }
 `;
 
-export const LOGIN_WITH_OTP = gql`
-  mutation LoginWithOtp($mobilenumber: String!, $otp: String!) {
-    loginWithOtp(mobilenumber: $mobilenumber, otp: $otp) {
-      tokens {
-        accessToken
-        refreshToken
-      }
+export const OTP_CONFIRM = gql`
+  mutation OtpConfirm($phone: String!, $otp: String!) {
+    otpConfirm(phone: $phone, otp: $otp) {
+      token
+      refreshToken
+      csrfToken
       user {
         id
-        name
         email
-        mobilenumber
+        firstName
+        lastName
+      }
+      errors {
+        field
+        message
+        code
       }
     }
   }
 `;
 
-// ─── USER PROFILE ─────────────────────────────────────────────────────────────
+export const LOGIN_WITH_PASSWORD = gql`
+  mutation TokenCreate($email: String!, $password: String!) {
+    tokenCreate(email: $email, password: $password) {
+      token
+      refreshToken
+      csrfToken
+      user {
+        id
+        email
+        firstName
+        lastName
+      }
+      errors {
+        field
+        message
+        code
+      }
+    }
+  }
+`;
+
+export const ACCOUNT_REGISTER = gql`
+  mutation AccountRegister($input: AccountRegisterInput!) {
+    accountRegister(input: $input) {
+      requiresConfirmation
+      user {
+        id
+        email
+        firstName
+        lastName
+      }
+      errors {
+        field
+        message
+        code
+      }
+    }
+  }
+`;
+
+export const TOKEN_REFRESH = gql`
+  mutation TokenRefresh($refreshToken: String!) {
+    tokenRefresh(refreshToken: $refreshToken) {
+      token
+      errors {
+        field
+        message
+        code
+      }
+    }
+  }
+`;
+
 export const UPDATE_ME = gql`
-  mutation UpdateMe($input: UpdateUserInput!) {
-    updateMe(input: $input) {
-      id
-      name
-      email
-      mobilenumber
+  mutation AccountUpdate($input: AccountInput!) {
+    accountUpdate(input: $input) {
+      user {
+        id
+        email
+        firstName
+        lastName
+      }
+      errors {
+        field
+        message
+        code
+      }
     }
   }
 `;
 
-// ─── CART ─────────────────────────────────────────────────────────────────────
-export const ADD_TO_CART = gql`
-  mutation AddToCart($productId: UUID!, $quantity: Int!) {
-    addToCart(productId: $productId, quantity: $quantity) {
-      id
-      items {
+// ─── CHECKOUT & CART ──────────────────────────────────────────────────────────
+export const CHECKOUT_CREATE = gql`
+  mutation CheckoutCreate($input: CheckoutCreateInput!) {
+    checkoutCreate(input: $input) {
+      created
+      checkout {
         id
-        quantity
-        product {
+        token
+        totalPrice {
+          gross {
+            amount
+            currency
+          }
+        }
+        lines {
           id
-          title
-          price
-          effectivePrice
-          thumbnail {
-            mediaUrl
+          quantity
+          variant {
+            id
+            name
           }
         }
       }
-      billSummary {
-        itemTotal
-        discountApplied
-        deliveryFee
-        tax
-        grandTotal
+      errors {
+        field
+        message
+        code
       }
     }
   }
 `;
 
-export const UPDATE_CART_ITEM = gql`
-  mutation UpdateCartItem($productId: UUID!, $quantity: Int!) {
-    updateCartItem(productId: $productId, quantity: $quantity) {
-      id
-      items {
+export const CHECKOUT_LINES_ADD = gql`
+  mutation CheckoutLinesAdd($checkoutId: ID, $lines: [CheckoutLineInput!]!) {
+    checkoutLinesAdd(id: $checkoutId, lines: $lines) {
+      checkout {
         id
-        quantity
-        product {
+        lines {
           id
-          title
-          price
-          effectivePrice
-          thumbnail {
-            mediaUrl
+          quantity
+          variant {
+            id
+            name
+          }
+        }
+        totalPrice {
+          gross {
+            amount
+            currency
           }
         }
       }
-      billSummary {
-        itemTotal
-        discountApplied
-        deliveryFee
-        tax
-        grandTotal
+      errors {
+        field
+        message
+        code
       }
     }
   }
 `;
 
-export const REMOVE_FROM_CART = gql`
-  mutation RemoveFromCart($productId: UUID!) {
-    removeFromCart(productId: $productId) {
-      id
-      items {
+export const CHECKOUT_LINES_UPDATE = gql`
+  mutation CheckoutLinesUpdate($checkoutId: ID, $lines: [CheckoutLineUpdateInput!]!) {
+    checkoutLinesUpdate(id: $checkoutId, lines: $lines) {
+      checkout {
         id
-        quantity
-        product {
+        lines {
           id
-          title
+          quantity
+          variant {
+            id
+            name
+          }
+        }
+        totalPrice {
+          gross {
+            amount
+            currency
+          }
         }
       }
-      billSummary {
-        itemTotal
-        discountApplied
-        deliveryFee
-        tax
-        grandTotal
+      errors {
+        field
+        message
+        code
       }
     }
   }
 `;
 
-export const CLEAR_CART = gql`
-  mutation ClearCart {
-    clearCart {
-      id
-      items {
+export const CHECKOUT_LINE_DELETE = gql`
+  mutation CheckoutLineDelete($checkoutId: ID, $lineId: ID!) {
+    checkoutLineDelete(id: $checkoutId, lineId: $lineId) {
+      checkout {
         id
+        lines {
+          id
+          quantity
+        }
+        totalPrice {
+          gross {
+            amount
+            currency
+          }
+        }
       }
-    }
-  }
-`;
-
-export const APPLY_COUPON_TO_CART = gql`
-  mutation ApplyCouponToCart($code: String!) {
-    applyCouponToCart(code: $code) {
-      id
-      billSummary {
-        itemTotal
-        discountApplied
-        deliveryFee
-        tax
-        grandTotal
-      }
-    }
-  }
-`;
-
-export const REMOVE_COUPON_FROM_CART = gql`
-  mutation RemoveCouponFromCart($code: String!) {
-    removeCouponFromCart(code: $code) {
-      id
-      billSummary {
-        itemTotal
-        discountApplied
-        deliveryFee
-        tax
-        grandTotal
+      errors {
+        field
+        message
+        code
       }
     }
   }
@@ -178,108 +223,124 @@ export const REMOVE_COUPON_FROM_CART = gql`
 
 // ─── ADDRESSES ────────────────────────────────────────────────────────────────
 export const CREATE_USER_ADDRESS = gql`
-  mutation CreateUserAddress($input: CreateUserAddressInput!) {
-    createUserAddress(input: $input) {
-      id
-      customerName
-      addressLine1
-      addressLine2
-      landmark
-      district
-      state
-      pincode
-      phoneNumber
-      isPrimary
-    }
-  }
-`;
-
-export const UPDATE_USER_ADDRESS = gql`
-  mutation UpdateUserAddress($id: UUID!, $input: UpdateUserAddressInput!) {
-    updateUserAddress(id: $id, input: $input) {
-      id
-      customerName
-      addressLine1
-      addressLine2
-      district
-      state
-      pincode
-      phoneNumber
-      isPrimary
-    }
-  }
-`;
-
-export const DELETE_USER_ADDRESS = gql`
-  mutation DeleteUserAddress($id: UUID!) {
-    deleteUserAddress(id: $id)
-  }
-`;
-
-// ─── CHECKOUT & ORDERS ────────────────────────────────────────────────────────
-export const SELECT_DELIVERY_OPTION = gql`
-  mutation SelectDeliveryOption($addressId: UUID!, $serviceName: String!) {
-    selectDeliveryOption(addressId: $addressId, serviceName: $serviceName) {
-      id
-      deliveryFee
-      deliveryService
-      estimatedDays
-      deliveryAddressId
-      billSummary {
-        itemTotal
-        discountApplied
-        deliveryFee
-        tax
-        grandTotal
+  mutation AccountAddressCreate($input: AddressInput!, $type: AddressTypeEnum) {
+    accountAddressCreate(input: $input, type: $type) {
+      address {
+        id
+        firstName
+        lastName
+        streetAddress1
+        streetAddress2
+        city
+        postalCode
+        countryArea
+        phone
+      }
+      errors {
+        field
+        message
+        code
       }
     }
   }
 `;
 
-export const CHECKOUT_CART = gql`
-  mutation CheckoutCart($paymentMethod: String!) {
-    checkoutCart(paymentMethod: $paymentMethod) {
-      id
-      orderStatus
-      paymentStatus
-      grandTotal
-      itemTotal
-      discountApplied
-      deliveryFee
-      tax
-      createdAt
+export const DELETE_USER_ADDRESS = gql`
+  mutation AccountAddressDelete($id: ID!) {
+    accountAddressDelete(id: $id) {
+      address {
+        id
+      }
+      errors {
+        field
+        message
+        code
+      }
     }
   }
 `;
 
-// ─── RAZORPAY PAYMENT ─────────────────────────────────────────────────────────
-export const INITIATE_ONLINE_PAYMENT = gql`
-  mutation InitiateOnlinePayment($orderId: UUID!) {
-    initiateOnlinePayment(orderId: $orderId) {
-      key
-      amount
-      currency
-      name
-      orderId
+export const CHECKOUT_SHIPPING_ADDRESS_UPDATE = gql`
+  mutation CheckoutShippingAddressUpdate($checkoutId: ID, $shippingAddress: AddressInput!) {
+    checkoutShippingAddressUpdate(id: $checkoutId, shippingAddress: $shippingAddress) {
+      checkout {
+        id
+        shippingAddress {
+          id
+          firstName
+          lastName
+          streetAddress1
+          city
+          postalCode
+        }
+      }
+      errors {
+        field
+        message
+        code
+      }
     }
   }
 `;
 
-export const VERIFY_ONLINE_PAYMENT = gql`
-  mutation VerifyOnlinePayment(
-    $razorpayOrderId: String!
-    $razorpayPaymentId: String!
-    $razorpaySignature: String!
-  ) {
-    verifyOnlinePayment(
-      razorpayOrderId: $razorpayOrderId
-      razorpayPaymentId: $razorpayPaymentId
-      razorpaySignature: $razorpaySignature
-    ) {
-      id
-      orderStatus
-      paymentStatus
-      grandTotal
+export const CHECKOUT_COMPLETE = gql`
+  mutation CheckoutComplete($checkoutId: ID!) {
+    checkoutComplete(id: $checkoutId) {
+      order {
+        id
+        number
+        status
+      }
+      errors {
+        field
+        message
+        code
+      }
     }
   }
 `;
+
+export const CHECKOUT_ADD_PROMO_CODE = gql`
+  mutation CheckoutAddPromoCode($checkoutId: ID!, $promoCode: String!) {
+    checkoutAddPromoCode(id: $checkoutId, promoCode: $promoCode) {
+      checkout {
+        id
+        discount {
+          amount
+          currency
+        }
+        totalPrice {
+          gross {
+            amount
+            currency
+          }
+        }
+      }
+      errors {
+        field
+        message
+        code
+      }
+    }
+  }
+`;
+
+export const CHECKOUT_REMOVE_PROMO_CODE = gql`
+  mutation CheckoutRemovePromoCode($checkoutId: ID!, $promoCode: String!) {
+    checkoutRemovePromoCode(id: $checkoutId, promoCode: $promoCode) {
+      checkout {
+        id
+        discount {
+          amount
+          currency
+        }
+      }
+      errors {
+        field
+        message
+        code
+      }
+    }
+  }
+`;
+

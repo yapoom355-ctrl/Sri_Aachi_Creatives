@@ -7,8 +7,8 @@ export interface Product {
   numericPrice: number;
   image: string;
   isLiked?: boolean;
-  rating: number;
-  reviewsCount: number;
+  rating?: number;
+  reviewsCount?: number;
   colors: string[];
   sizes: string[];
   limited?: boolean;

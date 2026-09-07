@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useQuery } from "@apollo/client/react";
 import { GET_PRODUCTS } from "@/graphql/queries";
+import { resolveProductImage } from "@/utils/productImages";
 import styles from "./Banner.module.css";
 
 
@@ -14,16 +15,20 @@ export default function Banner() {
   const [fade, setFade] = useState(true);
   const { data, loading, error } = useQuery<any>(GET_PRODUCTS, { fetchPolicy: "cache-first" });
 
-  const dynamicSlides = data?.products?.slice(0, 5).map((p: any, index: number) => ({
-    tag: p.categories?.[0]?.title || "Featured",
+  const rawProducts =
+    data?.products?.edges?.map((e: any) => e.node) ||
+    (Array.isArray(data?.products) ? data.products : []);
+
+  const dynamicSlides = rawProducts.slice(0, 5).map((p: any) => ({
+    tag: p.category?.name || p.categories?.[0]?.title || "Featured",
     title: (
       <span style={{ fontSize: "0.95em", lineHeight: "1.2" }}>
-        {p.title}
+        {p.name || p.title}
       </span>
     ),
-    image: p.thumbnail?.mediaUrl,
+    image: resolveProductImage(p.thumbnail?.url || p.thumbnail?.mediaUrl, `${p.name} ${p.slug}`, p.id),
     link: `/product/${p.id}`,
-  })) || [];
+  }));
 
   const slidesToUse = dynamicSlides;
 

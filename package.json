@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:graphql": "node test_all_website_graphql.js"
   },
   "dependencies": {
     "@apollo/client": "^4.2.6",

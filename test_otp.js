@@ -4,8 +4,8 @@ function req(body) {
   return new Promise((res) => {
     const bodyStr = JSON.stringify(body);
     const r = https.request({
-      hostname: 'gubera-2-0-backend-fastapi-graphql.vercel.app',
-      path: '/graphql',
+      hostname: 'sriaachicreatives.udayamarketing.in',
+      path: '/graphql/',
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bodyStr), 'x-tenant-id': '4c7b9c85-0963-49ba-bd2f-7776a0be4b71' }
     }, (resp) => {

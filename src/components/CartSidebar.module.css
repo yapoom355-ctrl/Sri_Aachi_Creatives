@@ -593,6 +593,159 @@
   opacity: 0.9;
 }
 
+/* ── Screenshot 1 Address Cards & Badges ───────────────────────────────────── */
+.sectionHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.redPin {
+  color: #ef4444;
+}
+
+.addNewAddressBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.addNewAddressBtn:hover {
+  background: #dcfce7;
+}
+
+.addressCardsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.addressCardItem {
+  background: #ffffff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.addressCardItem:hover {
+  border-color: #cbd5e1;
+}
+
+.addressCardItemSelected {
+  border: 2px solid #005a43;
+  box-shadow: 0 4px 12px rgba(0, 90, 67, 0.08);
+}
+
+.addressCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.addressBadgeGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.addressCardName {
+  font-size: 13px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.badgeDefault {
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 5px;
+}
+
+.badgeSelected {
+  background: #064e3b;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 5px;
+}
+
+.addressActionBtns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cardEditBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.cardEditBtn:hover {
+  text-decoration: underline;
+}
+
+.cardDeleteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  color: #dc2626;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.cardDeleteBtn:hover {
+  text-decoration: underline;
+}
+
+.cardAddressLine {
+  font-size: 11px;
+  color: #4b5563;
+  margin: 2px 0;
+  line-height: 1.35;
+}
+
+.cardAddressCity {
+  font-size: 11px;
+  color: #4b5563;
+  margin: 2px 0;
+  line-height: 1.35;
+}
+
+.cardAddressPhone {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-top: 4px;
+}
+
 @media (max-width: 767px) {
   .backdrop,
   .sidebar {

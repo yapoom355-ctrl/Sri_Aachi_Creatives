@@ -4,76 +4,141 @@ export const GET_ME = gql`
   query GetMe {
     me {
       id
-      name
       email
-      mobilenumber
+      firstName
+      lastName
+      defaultShippingAddress {
+        id
+        firstName
+        lastName
+        streetAddress1
+        streetAddress2
+        city
+        postalCode
+        countryArea
+        phone
+      }
     }
   }
 `;
 
 export const GET_CATEGORIES = gql`
-  query GetCategories($search: String) {
-    categories(search: $search) {
-      id
-      title
-      subtitle
-      description
-      thumbnail {
-        mediaUrl
+  query GetCategories($first: Int = 100) {
+    categories(first: $first) {
+      edges {
+        node {
+          id
+          name
+          slug
+          description
+          backgroundImage {
+            url
+            alt
+          }
+        }
       }
     }
   }
 `;
 
 export const GET_PRODUCTS = gql`
-  query GetProducts($productType: ProductTypeEnum, $search: String) {
-    products(productType: $productType, search: $search) {
-      id
-      title
-      subtitle
-      description
-      price
-      effectivePrice
-      thumbnail {
-        mediaUrl
-      }
-      categories {
-        id
-        title
+  query GetProducts($channel: String = "sri-aachi-creatives", $first: Int = 100, $search: String) {
+    products(channel: $channel, first: $first, search: $search) {
+      edges {
+        node {
+          id
+          name
+          slug
+          description
+          thumbnail {
+            url
+            alt
+          }
+          pricing {
+            priceRange {
+              start {
+                gross {
+                  amount
+                  currency
+                }
+              }
+            }
+          }
+          category {
+            id
+            name
+            slug
+          }
+          variants {
+            id
+            name
+            sku
+            pricing {
+              price {
+                gross {
+                  amount
+                  currency
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
 `;
 
 export const GET_PRODUCT = gql`
-  query GetProduct($id: UUID!) {
-    product(id: $id) {
+  query GetProduct($id: ID, $slug: String, $channel: String = "sri-aachi-creatives") {
+    product(id: $id, slug: $slug, channel: $channel) {
       id
-      title
-      subtitle
+      name
+      slug
       description
-      price
-      effectivePrice
       thumbnail {
-        mediaUrl
+        url
+        alt
       }
       media {
-        mediaUrl
+        url
+        alt
       }
-      categories {
-        id
-        title
+      pricing {
+        priceRange {
+          start {
+            gross {
+              amount
+              currency
+            }
+          }
+        }
       }
-      attributes {
+      category {
         id
-        attributeValue {
-          id
-          value
-          hexCode
+        name
+        slug
+      }
+      variants {
+        id
+        name
+        sku
+        pricing {
+          price {
+            gross {
+              amount
+              currency
+            }
+          }
+        }
+        attributes {
           attribute {
             id
             name
-            displayName
+          }
+          values {
+            id
+            name
+            value
           }
         }
       }
@@ -82,41 +147,65 @@ export const GET_PRODUCT = gql`
 `;
 
 export const GET_USER_CART = gql`
-  query GetUserCart {
-    myCart {
+  query GetCheckout($id: ID!) {
+    checkout(id: $id) {
       id
-      deliveryFee
-      deliveryAddressId
-      deliveryAddress {
-        id
-        customerName
-        addressLine1
-        addressLine2
-        district
-        state
-        pincode
-        phoneNumber
-        isPrimary
-      }
-      items {
+      token
+      lines {
         id
         quantity
-        product {
+        variant {
           id
-          title
-          price
-          effectivePrice
-          thumbnail {
-            mediaUrl
+          name
+          pricing {
+            price {
+              gross {
+                amount
+                currency
+              }
+            }
+          }
+          product {
+            id
+            name
+            thumbnail {
+              url
+            }
           }
         }
       }
-      billSummary {
-        itemTotal
-        discountApplied
-        deliveryFee
-        tax
-        grandTotal
+      totalPrice {
+        gross {
+          amount
+          currency
+        }
+      }
+      subtotalPrice {
+        gross {
+          amount
+          currency
+        }
+      }
+      shippingPrice {
+        gross {
+          amount
+          currency
+        }
+      }
+      discount {
+        amount
+        currency
+      }
+      shippingAddress {
+        id
+        firstName
+        lastName
+        streetAddress1
+        streetAddress2
+        city
+        postalCode
+        countryArea
+        phone
       }
     }
   }
@@ -124,49 +213,56 @@ export const GET_USER_CART = gql`
 
 export const GET_MY_ADDRESSES = gql`
   query GetMyAddresses {
-    myAddresses {
+    me {
       id
-      customerName
-      addressLine1
-      addressLine2
-      landmark
-      district
-      state
-      pincode
-      phoneNumber
-      isPrimary
+      addresses {
+        id
+        firstName
+        lastName
+        streetAddress1
+        streetAddress2
+        city
+        postalCode
+        countryArea
+        phone
+        isDefaultShippingAddress
+        isDefaultBillingAddress
+      }
     }
   }
 `;
 
-export const GET_ORDER = gql`
-  query GetOrder($id: UUID!) {
-    order(id: $id) {
+export const GET_ORDERS = gql`
+  query GetOrders($first: Int = 20) {
+    me {
       id
-      orderStatus
-      paymentStatus
-      itemTotal
-      discountApplied
-      deliveryFee
-      tax
-      grandTotal
-      createdAt
-      deliveryAddress {
-        customerName
-        addressLine1
-        district
-        state
-        pincode
-        phoneNumber
-      }
-      items {
-        id
-        quantity
-        product {
-          id
-          title
-          thumbnail {
-            mediaUrl
+      orders(first: $first) {
+        edges {
+          node {
+            id
+            number
+            created
+            status
+            total {
+              gross {
+                amount
+                currency
+              }
+            }
+            lines {
+              id
+              productName
+              quantity
+              thumbnail {
+                url
+              }
+              unitPrice {
+                gross {
+                  amount
+                  currency
+                }
+              }
+            }
           }
         }
       }
@@ -174,23 +270,59 @@ export const GET_ORDER = gql`
   }
 `;
 
-export const GET_ORDERS = gql`
-  query GetOrders {
-    myOrders {
+export const GET_ORDER = gql`
+  query GetOrder($id: ID!) {
+    order(id: $id) {
       id
-      orderStatus
+      number
+      created
+      status
+      isPaid
       paymentStatus
-      grandTotal
-      createdAt
-      items {
+      total {
+        gross {
+          amount
+          currency
+        }
+      }
+      undiscountedTotal {
+        gross {
+          amount
+          currency
+        }
+      }
+      shippingPrice {
+        gross {
+          amount
+          currency
+        }
+      }
+      shippingAddress {
+        firstName
+        lastName
+        streetAddress1
+        streetAddress2
+        city
+        postalCode
+        countryArea
+        phone
+      }
+      lines {
         id
+        productName
         quantity
-        product {
-          id
-          title
-          thumbnail {
-            mediaUrl
+        thumbnail {
+          url
+        }
+        unitPrice {
+          gross {
+            amount
+            currency
           }
+        }
+        metadata {
+          key
+          value
         }
       }
     }
@@ -198,14 +330,17 @@ export const GET_ORDERS = gql`
 `;
 
 export const GET_COUPONS = gql`
-  query GetCoupons {
-    coupons {
-      id
-      code
-      description
-      discountType
-      discountValue
-      endDate
+  query GetVouchers($first: Int = 20, $channel: String = "default-channel") {
+    vouchers(first: $first, channel: $channel) {
+      edges {
+        node {
+          id
+          name
+          code
+          discountValue
+          type
+        }
+      }
     }
   }
 `;

@@ -8,6 +8,7 @@ import MobileContainer from "@/components/MobileContainer";
 import BottomNav from "@/components/BottomNav";
 import { ChevronLeft, ShoppingBag } from "lucide-react";
 import { GET_ORDERS } from "@/graphql/queries";
+import { resolveProductImage } from "@/utils/productImages";
 import { useCart } from "@/context/CartContext";
 import styles from "./page.module.css";
 
@@ -39,27 +40,6 @@ export default function MyOrdersPage() {
     fetchPolicy: "cache-and-network",
   }) as any;
 
-  // Fallback images logic
-  const FALLBACK_IMAGES = [
-    "/images/resin-art-block.webp",
-    "/images/resin-table.webp",
-    "/images/photo-frame.webp",
-    "/images/motor-engine-table.webp",
-    "/images/motor-engine-table-3.webp",
-  ];
-
-  const getProductImage = (thumbnailUrl?: string | null, pid?: string) => {
-    if (thumbnailUrl) {
-      return thumbnailUrl;
-    }
-    const idStr = pid || "";
-    let sum = 0;
-    for (let i = 0; i < idStr.length; i++) {
-      sum += idStr.charCodeAt(i);
-    }
-    return FALLBACK_IMAGES[sum % FALLBACK_IMAGES.length];
-  };
-
   const getStatusCategory = (backendStatus: string) => {
     const s = backendStatus?.toUpperCase() || "";
     if (s === "DELIVERED" || s === "COMPLETED") return "Completed";
@@ -67,20 +47,27 @@ export default function MyOrdersPage() {
     return "Active";
   };
 
-  const backendOrders = data?.myOrders || [];
+  const rawOrders =
+    data?.me?.orders?.edges?.map((e: any) => e.node) ||
+    data?.myOrders ||
+    [];
 
-  const mappedOrders: OrderData[] = backendOrders.map((o: any) => ({
-    id: o.id.split("-")[0], // Just display first chunk for cleaner UI
-    date: new Date(o.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
-    status: o.orderStatus,
-    statusCategory: getStatusCategory(o.orderStatus),
-    total: `₹${o.grandTotal ?? 0}`,
-    actionText: getStatusCategory(o.orderStatus) === "Active" ? "Track Order" : "View Details",
-    items: (o.items || []).map((item: any) => ({
-      name: item.product?.title || "Product",
-      price: `₹${item.subtotal || 0}`,
-      image: getProductImage(item.product?.thumbnail?.mediaUrl, item.product?.id),
-      size: "M", // Fallback, no size in OrderItem type from standard schema
+  const mappedOrders: OrderData[] = rawOrders.map((o: any) => ({
+    id: o.number || (o.id ? o.id.slice(0, 8) : "Order"),
+    date: o.created
+      ? new Date(o.created).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+      : o.createdAt
+      ? new Date(o.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+      : "Recent",
+    status: o.status || o.orderStatus || "Processing",
+    statusCategory: getStatusCategory(o.status || o.orderStatus),
+    total: `₹${o.total?.gross?.amount ?? o.grandTotal ?? 0}`,
+    actionText: getStatusCategory(o.status || o.orderStatus) === "Active" ? "Track Order" : "View Details",
+    items: (o.lines || o.items || []).map((item: any) => ({
+      name: item.productName || item.product?.title || "Product",
+      price: `₹${item.unitPrice?.gross?.amount ?? item.subtotal ?? 0}`,
+      image: resolveProductImage(item.thumbnail?.url || item.product?.thumbnail?.mediaUrl, item.productName || item.product?.title, item.id),
+      size: "Standard",
       quantity: item.quantity,
     })),
   }));
@@ -227,7 +214,7 @@ export default function MyOrdersPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      alert(`${order.actionText} clicked for ${order.id}`);
+                      router.push(`/order/${order.id}`);
                     }}
                     className={styles.actionBtn}
                     type="button"

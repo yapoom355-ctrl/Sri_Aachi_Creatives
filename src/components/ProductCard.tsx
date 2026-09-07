@@ -18,6 +18,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const router = useRouter();
   const { addToCart, cartItems, updateQuantity, wishlist, toggleWishlist } = useCart();
   const liked = wishlist ? wishlist.includes(product.id) : false;
+  const [imgSrc, setImgSrc] = useState(product.image || "/images/resin-memory-block.jpg");
 
   const cartItem = cartItems.find((i) => i.id === product.id);
   const quantity = cartItem ? cartItem.quantity : 0;
@@ -26,7 +27,14 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
     e.stopPropagation();
     e.preventDefault();
     if (quantity === 0) {
-      addToCart(product.id, 1);
+      addToCart(product.id, 1, {
+        name: product.name,
+        subtitle: product.subtitle,
+        price: product.price,
+        numericPrice: product.numericPrice || parseFloat(product.price.replace(/[^0-9.]/g, "")) || 0,
+        image: product.image,
+        variantId: (product as any).variantId || (product as any).variants?.[0]?.id,
+      });
     } else {
       updateQuantity(product.id, product.sizes?.[0] || "M", product.colors?.[0] || "#000", quantity + 1);
     }
@@ -55,7 +63,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
       >
         <div className={styles.imageWrapper}>
           <Image
-            src={product.image}
+            src={imgSrc}
             alt={product.name}
             width={180}
             height={190}
@@ -64,6 +72,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
               viewTransitionName: `product-image-${product.id}`,
             } as React.CSSProperties}
             priority={priority}
+            onError={() => setImgSrc("/images/resin-memory-block.jpg")}
           />
         </div>
         <div className={styles.details}>

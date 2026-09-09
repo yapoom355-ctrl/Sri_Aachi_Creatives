@@ -50,9 +50,15 @@ export const GET_PRODUCTS = gql`
           name
           slug
           description
-          thumbnail {
+          thumbnail(size: 1024) {
             url
             alt
+          }
+          media {
+            id
+            url
+            alt
+            type
           }
           pricing {
             priceRange {
@@ -95,13 +101,15 @@ export const GET_PRODUCT = gql`
       name
       slug
       description
-      thumbnail {
+      thumbnail(size: 1024) {
         url
         alt
       }
       media {
+        id
         url
         alt
+        type
       }
       pricing {
         priceRange {
@@ -253,7 +261,7 @@ export const GET_ORDERS = gql`
               id
               productName
               quantity
-              thumbnail {
+              thumbnail(size: 1024) {
                 url
               }
               unitPrice {
@@ -324,7 +332,7 @@ export const GET_ORDER = gql`
         id
         productName
         quantity
-        thumbnail {
+        thumbnail(size: 1024) {
           url
         }
         unitPrice {

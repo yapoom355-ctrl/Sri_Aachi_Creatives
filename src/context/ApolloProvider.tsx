@@ -117,6 +117,9 @@ const client = new ApolloClient({
           },
         },
       },
+      Product: {
+        keyFields: ["id"],
+      },
     },
   }),
 });

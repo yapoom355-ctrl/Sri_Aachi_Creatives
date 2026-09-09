@@ -28,7 +28,7 @@ export default function Banner() {
         {p.name || p.title}
       </span>
     ),
-    image: resolveProductImage(p.thumbnail?.url || p.thumbnail?.mediaUrl, `${p.name} ${p.slug}`, p.id),
+    image: resolveProductImage(p.media?.[0]?.url || p.thumbnail?.url || p.thumbnail?.mediaUrl, `${p.name} ${p.slug}`, p.id),
     link: `/product/${encodeURIComponent(p.id)}`,
   }));
 

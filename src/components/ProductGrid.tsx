@@ -42,7 +42,7 @@ export default function ProductGrid({ wishlistOnly = false }: { wishlistOnly?: b
 
   let products = rawProducts.map((p: any) => {
     const grossPrice = p.pricing?.priceRange?.start?.gross?.amount ?? p.effectivePrice ?? p.price ?? 0;
-    const thumb = p.thumbnail?.url || p.thumbnail?.mediaUrl;
+    const thumb = p.media?.[0]?.url || p.thumbnail?.url || p.thumbnail?.mediaUrl;
     return {
       id: p.id,
       variantId: p.variants?.[0]?.id,

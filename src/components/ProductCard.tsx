@@ -65,13 +65,15 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           <Image
             src={imgSrc}
             alt={product.name}
-            width={180}
-            height={190}
+            width={400}
+            height={420}
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className={styles.productImage}
             style={{
               viewTransitionName: `product-image-${product.id}`,
             } as React.CSSProperties}
             priority={priority}
+            unoptimized={Boolean(imgSrc.includes("sriaachicreatives.udayamarketing.in"))}
             onError={() => setImgSrc("/images/resin-memory-block.jpg")}
           />
         </div>

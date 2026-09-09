@@ -1,6 +1,16 @@
 export function resolveProductImage(thumbnailUrl?: string | null, nameOrSlug?: string, id?: string): string {
-  if (thumbnailUrl && thumbnailUrl.startsWith("http")) {
-    return thumbnailUrl;
+  if (thumbnailUrl) {
+    let url = thumbnailUrl;
+    if (url.startsWith("/media/")) {
+      url = `https://sriaachicreatives.udayamarketing.in${url}`;
+    }
+    if (url.startsWith("http")) {
+      // Auto-upgrade any low-res 256/128/64 thumbnails to 1024 high resolution
+      return url
+        .replace(/_thumbnail_256\./gi, "_thumbnail_1024.")
+        .replace(/_thumbnail_128\./gi, "_thumbnail_1024.")
+        .replace(/_thumbnail_64\./gi, "_thumbnail_1024.");
+    }
   }
 
   const query = (nameOrSlug || "").toLowerCase();

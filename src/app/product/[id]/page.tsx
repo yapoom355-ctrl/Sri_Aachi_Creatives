@@ -38,10 +38,12 @@ export default function ProductPage({ params }: ProductPageProps) {
   const [customImageName, setCustomImageName] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const { data, loading, error } = useQuery<any>(GET_PRODUCT, {
     variables: isBase64Id ? { id } : { slug: id },
     skip: !id,
+    fetchPolicy: "cache-and-network",
   });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -191,7 +193,26 @@ export default function ProductPage({ params }: ProductPageProps) {
   const p = data.product;
   const grossPrice =
     p.pricing?.priceRange?.start?.gross?.amount ?? p.effectivePrice ?? p.price ?? 0;
-  const thumb = p.thumbnail?.url || p.media?.[0]?.url || p.thumbnail?.mediaUrl;
+
+  // Extract all media items (high-res images)
+  const mediaUrls: string[] = [];
+  if (Array.isArray(p.media) && p.media.length > 0) {
+    p.media.forEach((m: any) => {
+      if (m?.url) mediaUrls.push(m.url);
+    });
+  }
+  if (p.thumbnail?.url && !mediaUrls.includes(p.thumbnail.url)) {
+    mediaUrls.push(p.thumbnail.url);
+  }
+  if (mediaUrls.length === 0 && p.thumbnail?.mediaUrl) {
+    mediaUrls.push(p.thumbnail.mediaUrl);
+  }
+
+  const allImages = mediaUrls.length > 0
+    ? mediaUrls.map((u) => resolveProductImage(u, `${p.name} ${p.slug}`, p.id))
+    : [resolveProductImage(null, `${p.name} ${p.slug}`, p.id)];
+
+  const activeImage = allImages[selectedImageIndex] || allImages[0];
 
   const product = {
     id: p.id,
@@ -200,7 +221,7 @@ export default function ProductPage({ params }: ProductPageProps) {
     description: p.description || "",
     price: `₹${grossPrice}`,
     numericPrice: Number(grossPrice),
-    image: resolveProductImage(thumb, `${p.name} ${p.slug}`, p.id),
+    image: activeImage,
     category: p.category?.id || p.categories?.[0]?.id || "",
     categoryName: p.category?.name || p.categories?.[0]?.title || "",
     isLiked: false,
@@ -212,14 +233,15 @@ export default function ProductPage({ params }: ProductPageProps) {
       <ProductDetailsHeader />
 
       <main className={styles.mainContent}>
-        {/* Left Column - Product Image */}
+        {/* Left Column - Product Image & Gallery */}
         <div className={styles.imageBlock}>
           <div className={styles.imageCard}>
             <Image
-              src={product.image}
+              src={activeImage}
               alt={product.name}
-              width={400}
-              height={420}
+              width={800}
+              height={840}
+              sizes="(max-width: 768px) 100vw, 50vw"
               className={styles.productImage}
               style={
                 {
@@ -227,12 +249,37 @@ export default function ProductPage({ params }: ProductPageProps) {
                 } as React.CSSProperties
               }
               priority
+              unoptimized={Boolean(activeImage.includes("sriaachicreatives.udayamarketing.in"))}
             />
             {product.limited && (
               <span className={styles.limitedBadge}>LIMITED</span>
             )}
             <FavoriteButton isLiked={product.isLiked} />
           </div>
+
+          {/* Thumbnail Gallery (shown if multiple photos exist) */}
+          {allImages.length > 1 && (
+            <div className={styles.thumbnailsRow}>
+              {allImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className={`${styles.thumbnailBtn} ${selectedImageIndex === idx ? styles.activeThumbnail : ""}`}
+                  onClick={() => setSelectedImageIndex(idx)}
+                  aria-label={`View photo ${idx + 1}`}
+                >
+                  <Image
+                    src={img}
+                    alt={`${product.name} thumbnail ${idx + 1}`}
+                    width={72}
+                    height={72}
+                    className={styles.thumbnailImg}
+                    unoptimized={Boolean(img.includes("sriaachicreatives.udayamarketing.in"))}
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right Column - Product details */}

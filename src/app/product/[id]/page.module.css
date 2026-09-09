@@ -20,21 +20,32 @@
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1.05;
-  background-color: var(--card-bg);
-  border-radius: 36px;
+  background-color: #fbf9f5;
+  border-radius: 28px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 16px;
+}
+
+:global(.dark) .imageCard {
+  background-color: #1a1a1d;
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .productImage {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
+  object-fit: contain;
+  object-position: center;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.imageCard:hover .productImage {
+  transform: scale(1.02);
 }
 
 .thumbnailsRow {
@@ -430,6 +441,7 @@
   }
   
   .imageCard {
-    aspect-ratio: 1 / 1.1;
+    aspect-ratio: 1 / 1.05;
+    padding: 20px;
   }
 }

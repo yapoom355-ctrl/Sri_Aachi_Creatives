@@ -777,49 +777,70 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [updateMeMutation, user]
   );
 
-  // Real COD checkout: creates a Saleor order via checkoutCreate + checkoutComplete
+  // Real COD checkout: creates a genuine Saleor order via server-side draft order fulfillment
   const checkoutWithCOD = useCallback(
     async (addressId: string): Promise<string> => {
       if (!addressId) {
         throw new Error("Delivery address is required to proceed with checkout.");
       }
 
-      // Build real Saleor checkout
-      const checkoutId = await buildSaleorCheckout(addressId);
-
-      // Apply promo code if any
-      if (appliedCouponCode) {
-        try {
-          await checkoutAddPromoCodeMutation({
-            variables: { checkoutId, promoCode: appliedCouponCode },
-          });
-        } catch (err) {
-          console.warn("Could not apply promo code:", err);
-        }
+      const targetAddress = addresses.find((a) => a.id === addressId);
+      if (!targetAddress) {
+        throw new Error("Delivery address could not be found.");
       }
 
-      // Complete checkout → creates real Saleor order
-      const completeResult = await checkoutCompleteMutation({ variables: { checkoutId } });
-      const completeErrors = completeResult.data?.checkoutComplete?.errors ?? [];
-      if (completeErrors.length > 0) {
-        throw new Error(completeErrors.map((e: any) => e.message).join(", "));
+      const validLines = cartItems
+        .filter((item) => item.variantId)
+        .map((item) => ({ variantId: item.variantId!, quantity: item.quantity }));
+
+      if (validLines.length === 0) {
+        throw new Error("No items in cart with valid product variants. Please re-add your items.");
       }
 
-      const saleorOrder = completeResult.data?.checkoutComplete?.order;
-      if (!saleorOrder?.id) throw new Error("Order creation failed.");
+      const userEmail =
+        user?.email ||
+        (user?.phone ? `91${user.phone.replace(/\D/g, "").slice(-10)}@sriaachicreatives.in` : "customer@sriaachicreatives.in");
+
+      const res = await fetch("/api/checkout/cod", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address: targetAddress,
+          lines: validLines,
+          userEmail,
+          customerNote: appliedCouponCode ? `Coupon applied: ${appliedCouponCode}` : "Cash on Delivery (COD)",
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to place COD order.");
+      }
 
       await clearCart();
-      // Return the real Saleor order ID (base64 encoded ID)
-      return saleorOrder.id;
+      return data.orderId;
     },
-    [buildSaleorCheckout, appliedCouponCode, checkoutAddPromoCodeMutation, checkoutCompleteMutation, clearCart]
+    [addresses, cartItems, user, appliedCouponCode, clearCart]
   );
 
-  // Real Razorpay checkout: creates Saleor checkout, opens Razorpay, completes order on success
+  // Real Razorpay checkout: opens Razorpay, creates Saleor order on success
   const checkoutWithRazorpay = useCallback(
     async (addressId: string): Promise<string> => {
       if (!addressId) {
         throw new Error("Delivery address is required to proceed with checkout.");
+      }
+
+      const targetAddress = addresses.find((a) => a.id === addressId);
+      if (!targetAddress) {
+        throw new Error("Delivery address could not be found.");
+      }
+
+      const validLines = cartItems
+        .filter((item) => item.variantId)
+        .map((item) => ({ variantId: item.variantId!, quantity: item.quantity }));
+
+      if (validLines.length === 0) {
+        throw new Error("No items in cart with valid product variants. Please re-add your items.");
       }
 
       // Calculate grand total in paise
@@ -832,19 +853,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         throw new Error("Cart total is ₹0. Please add items before checkout.");
       }
 
-      // Pre-build Saleor checkout (before opening Razorpay)
-      const checkoutId = await buildSaleorCheckout(addressId);
-
-      // Apply promo code if any
-      if (appliedCouponCode) {
-        try {
-          await checkoutAddPromoCodeMutation({
-            variables: { checkoutId, promoCode: appliedCouponCode },
-          });
-        } catch (err) {
-          console.warn("Could not apply promo code:", err);
-        }
-      }
+      const userEmail =
+        user?.email ||
+        (user?.phone ? `91${user.phone.replace(/\D/g, "").slice(-10)}@sriaachicreatives.in` : "customer@sriaachicreatives.in");
 
       return new Promise((resolve, reject) => {
         const loadRazorpay = () =>
@@ -853,7 +864,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             const script = document.createElement("script");
             script.src = "https://checkout.razorpay.com/v1/checkout.js";
             script.onload = () => res();
-            script.onerror = () => rej(new Error("Failed to load Razorpay."));
+            script.onerror = () => rej(new Error("Failed to load Razorpay SDK."));
             document.body.appendChild(script);
           });
 
@@ -867,20 +878,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               description: `Order for ${cartItems.length} item(s)`,
               image: "/images/sri-aachi-logo.png",
               prefill: {
-                name: user?.name || "",
-                contact: user?.phone || "",
-                email: user?.email || "",
+                name: user?.name || targetAddress.customerName || "",
+                contact: user?.phone || targetAddress.phoneNumber || "",
+                email: userEmail,
               },
               theme: { color: "#a47449" },
-              handler: async (_response: any) => {
+              handler: async (response: any) => {
                 try {
-                  // Complete Saleor checkout after successful Razorpay payment
-                  const completeResult = await checkoutCompleteMutation({ variables: { checkoutId } });
-                  const saleorOrder = completeResult.data?.checkoutComplete?.order;
+                  const res = await fetch("/api/checkout/razorpay-complete", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      address: targetAddress,
+                      lines: validLines,
+                      userEmail,
+                      razorpayPaymentId: response.razorpay_payment_id,
+                    }),
+                  });
+
+                  const data = await res.json();
+                  if (!res.ok || !data.success) {
+                    throw new Error(data.message || "Failed to record payment in store.");
+                  }
+
                   await clearCart();
-                  resolve(saleorOrder?.id || checkoutId);
+                  resolve(data.orderId);
                 } catch (err: any) {
-                  reject(new Error("Payment succeeded but order creation failed: " + err.message));
+                  reject(new Error("Payment succeeded but order recording failed: " + err.message));
                 }
               },
               modal: {
@@ -897,8 +921,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           .catch(reject);
       });
     },
-    [cartItems, discountAmount, appliedCouponCode, user, buildSaleorCheckout,
-     checkoutAddPromoCodeMutation, checkoutCompleteMutation, clearCart]
+    [addresses, cartItems, discountAmount, user, clearCart]
   );
 
 

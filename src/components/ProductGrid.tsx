@@ -76,7 +76,7 @@ export default function ProductGrid({ wishlistOnly = false }: { wishlistOnly?: b
   }
 
   return (
-    <div className={styles.gridContainer}>
+    <div id="products-section" className={styles.gridContainer}>
       <div className={styles.grid}>
         {products.map((product: any) => (
           <ProductCard key={product.id} product={product} />

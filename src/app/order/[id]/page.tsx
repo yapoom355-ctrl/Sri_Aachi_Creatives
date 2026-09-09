@@ -26,22 +26,44 @@ export default function OrderDetailsPage({ params }: PageProps) {
 
   const order = data?.order;
 
-  // Map orderStatus to user-friendly steps
-  const STATUS_STEPS = ["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED"];
-  const cancelledStatuses = ["CANCELLED", "RETURNED", "REFUNDED"];
-  const currentStatusIdx = order ? STATUS_STEPS.indexOf(order.orderStatus) : -1;
-  const isCancelled = order ? cancelledStatuses.includes(order.orderStatus) : false;
+  // Real Backend Date and Time formatting
+  const createdDate = order?.created
+    ? new Date(order.created).toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+    : "";
+
+  // Realtime Status Tracking from Backend Saleor & Shiprocket
+  const isCancelled = order?.status === "CANCELED" || order?.status === "CANCELLED";
+  const fulfillments = order?.fulfillments || [];
+  const latestFulfillment = fulfillments.length > 0 ? fulfillments[fulfillments.length - 1] : null;
+  const hasTracking = Boolean(latestFulfillment?.trackingNumber);
+  const isFulfilled = order?.status === "FULFILLED";
+
+  // Step indices: 0: Placed, 1: Confirmed, 2: Processing, 3: Shipped, 4: Delivered
+  const STATUS_STEPS = ["Placed", "Confirmed", "Processing", "Shipped", "Delivered"];
+  let currentStepIdx = 1; // Any order stored in Saleor is confirmed
+  if (isFulfilled || hasTracking) {
+    currentStepIdx = 3; // Shipped via courier
+  } else if (order?.status === "UNFULFILLED") {
+    currentStepIdx = 1; // Confirmed, being processed
+  }
 
   const steps = isCancelled
     ? [
-      { title: "Order Placed", completed: true },
-      { title: "Cancelled", completed: true, active: true },
-    ]
-    : STATUS_STEPS.map((s, idx) => ({
-      title: s.charAt(0) + s.slice(1).toLowerCase(),
-      completed: currentStatusIdx >= idx,
-      active: currentStatusIdx === idx,
-    }));
+        { title: "Order Placed", completed: true },
+        { title: "Cancelled", completed: true, active: true },
+      ]
+    : STATUS_STEPS.map((name, idx) => ({
+        title: name,
+        completed: currentStepIdx >= idx,
+        active: currentStepIdx === idx,
+      }));
 
 
   if (loading) {
@@ -73,13 +95,6 @@ export default function OrderDetailsPage({ params }: PageProps) {
       </MobileContainer>
     );
   }
-
-  const addr = order.deliveryAddress;
-  const createdDate = new Date(order.createdAt).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
 
   return (
     <MobileContainer>
@@ -146,6 +161,29 @@ export default function OrderDetailsPage({ params }: PageProps) {
                   </div>
                 ))}
               </div>
+
+              {latestFulfillment?.trackingNumber && (
+                <div style={{
+                  marginTop: "1.25rem",
+                  padding: "0.85rem",
+                  background: "#f0fdf4",
+                  borderRadius: "8px",
+                  border: "1px solid #bbf7d0",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "4px"
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#166534" }}>🚚 Shiprocket Courier AWB:</span>
+                    <span style={{ fontSize: "0.72rem", color: "#15803d", fontWeight: 700, textTransform: "uppercase" }}>
+                      {latestFulfillment.statusDisplay || latestFulfillment.status || "Shipped"}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: "0.95rem", fontWeight: 700, color: "#14532d", letterSpacing: "1px" }}>
+                    {latestFulfillment.trackingNumber}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Items */}
@@ -257,8 +295,14 @@ export default function OrderDetailsPage({ params }: PageProps) {
                 <h3 className={styles.cardTitleInline}>Payment</h3>
               </div>
               <div className={styles.paymentMeta}>
-                <span className={styles.cardType}>
-                  {order.isPaid || order.paymentStatus === "PAID" ? "✅ Paid" : order.paymentStatus === "PENDING" ? "⏳ Pending" : order.paymentStatus || "Processed"}
+                <span className={styles.cardType} style={{ fontWeight: 600 }}>
+                  {order.isPaid || order.paymentStatus === "FULLY_CHARGED" || order.paymentStatus === "PAID"
+                    ? "✅ Paid Online (Razorpay)"
+                    : order.paymentStatus === "NOT_CHARGED"
+                    ? "💵 Cash on Delivery (Pay upon arrival)"
+                    : order.paymentStatus === "PENDING"
+                    ? "⏳ Payment Pending"
+                    : order.paymentStatus || "Processed"}
                 </span>
               </div>
             </div>
@@ -269,7 +313,15 @@ export default function OrderDetailsPage({ params }: PageProps) {
               <div className={styles.priceSummary}>
                 <div className={styles.priceRow}>
                   <span className={styles.priceLabel}>Subtotal</span>
-                  <span className={styles.priceValue}>₹{(order.subtotal?.gross?.amount ?? order.itemTotal ?? 0).toFixed(2)}</span>
+                  <span className={styles.priceValue}>
+                    ₹{(order.subtotal?.gross?.amount ?? (order.total?.gross?.amount ? order.total.gross.amount - (order.shippingPrice?.gross?.amount || 0) : 0)).toFixed(2)}
+                  </span>
+                </div>
+                <div className={styles.priceRow}>
+                  <span className={styles.priceLabel}>Delivery</span>
+                  <span className={styles.priceValue} style={{ color: (order.shippingPrice?.gross?.amount || 0) === 0 ? "#16a34a" : "inherit" }}>
+                    {(order.shippingPrice?.gross?.amount || 0) === 0 ? "FREE" : `₹${order.shippingPrice.gross.amount.toFixed(2)}`}
+                  </span>
                 </div>
                 <div className={`${styles.priceRow} ${styles.totalRow}`}>
                   <span className={styles.totalLabel}>Total</span>

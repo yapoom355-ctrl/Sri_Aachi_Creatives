@@ -25,7 +25,10 @@ interface ProductPageProps {
 }
 
 export default function ProductPage({ params }: ProductPageProps) {
-  const { id } = use(params);
+  const { id: rawId } = use(params);
+  const id = rawId ? decodeURIComponent(rawId) : "";
+  const isBase64Id = id.startsWith("UHJvZHVjd");
+
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -37,7 +40,7 @@ export default function ProductPage({ params }: ProductPageProps) {
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const { data, loading, error } = useQuery<any>(GET_PRODUCT, {
-    variables: { id },
+    variables: isBase64Id ? { id } : { slug: id },
     skip: !id,
   });
 

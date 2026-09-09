@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { useQuery } from "@apollo/client/react";
 import { GET_PRODUCTS } from "@/graphql/queries";
@@ -11,6 +12,7 @@ import styles from "./Banner.module.css";
 
 
 export default function Banner() {
+  const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fade, setFade] = useState(true);
   const { data, loading, error } = useQuery<any>(GET_PRODUCTS, { fetchPolicy: "cache-first" });
@@ -27,7 +29,7 @@ export default function Banner() {
       </span>
     ),
     image: resolveProductImage(p.thumbnail?.url || p.thumbnail?.mediaUrl, `${p.name} ${p.slug}`, p.id),
-    link: `/product/${p.id}`,
+    link: `/product/${encodeURIComponent(p.id)}`,
   }));
 
   const slidesToUse = dynamicSlides;
@@ -74,7 +76,21 @@ export default function Banner() {
       >
         <span className={styles.tagBadge}>{slide.tag}</span>
         <h2 className={styles.title}>{slide.title}</h2>
-        <Link href={slide.link} className={styles.shopButton}>
+        <Link
+          href={slide.link || "#products-section"}
+          className={styles.shopButton}
+          onClick={(e) => {
+            if (slide.link) {
+              e.preventDefault();
+              router.push(slide.link);
+            } else {
+              e.preventDefault();
+              const el = document.getElementById("products-section");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+              else router.push("/products");
+            }
+          }}
+        >
           <span>View Product</span>
           <ArrowRight size={14} className={styles.arrowIcon} strokeWidth={2} />
         </Link>

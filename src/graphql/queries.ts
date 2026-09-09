@@ -279,6 +279,19 @@ export const GET_ORDER = gql`
       status
       isPaid
       paymentStatus
+      subtotal {
+        gross {
+          amount
+          currency
+        }
+      }
+      fulfillments {
+        id
+        status
+        statusDisplay
+        trackingNumber
+        created
+      }
       total {
         gross {
           amount

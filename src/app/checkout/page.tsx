@@ -101,19 +101,18 @@ export default function CheckoutPage() {
     try {
       if (paymentMethod === "RAZORPAY") {
         const orderId = await checkoutWithRazorpay(selectedAddress.id);
-        router.push(`/order/${orderId}`);
+        router.replace(`/order/${orderId}`);
       } else {
         const orderId = await checkoutWithCOD(selectedAddress.id);
-        router.push(`/order/${orderId}`);
+        router.replace(`/order/${orderId}`);
       }
     } catch (err: any) {
+      setIsCheckingOut(false);
       if (err?.message === "Payment cancelled") {
         setCheckoutError("Payment was cancelled. You can try again or select Cash on Delivery.");
       } else {
         setCheckoutError(err?.message || "Checkout failed. Please try again.");
       }
-    } finally {
-      setIsCheckingOut(false);
     }
   };
 
@@ -399,6 +398,42 @@ export default function CheckoutPage() {
       />
 
       <BottomNav />
+
+      {/* Fullscreen Order Processing Overlay to avoid random page flashes */}
+      {isCheckingOut && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(255, 255, 255, 0.94)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          zIndex: 99999,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "18px",
+          padding: "24px",
+          textAlign: "center",
+        }}>
+          <div style={{
+            width: "52px",
+            height: "52px",
+            borderRadius: "50%",
+            border: "4px solid #e5e7eb",
+            borderTopColor: "#b91c1c",
+            animation: "spin 0.8s linear infinite",
+          }} />
+          <div>
+            <h3 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#111827", margin: "0 0 6px 0" }}>
+              Placing Your Order...
+            </h3>
+            <p style={{ fontSize: "0.88rem", color: "#6b7280", margin: 0, maxWidth: "290px", lineHeight: "1.4" }}>
+              Please do not refresh or close this window. We are confirming your order.
+            </p>
+          </div>
+        </div>
+      )}
     </MobileContainer>
   );
 }

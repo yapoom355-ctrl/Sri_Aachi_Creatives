@@ -194,22 +194,23 @@ export default function ProductPage({ params }: ProductPageProps) {
   const grossPrice =
     p.pricing?.priceRange?.start?.gross?.amount ?? p.effectivePrice ?? p.price ?? 0;
 
-  // Extract all media items (high-res images)
+  // Extract distinct media items (high-res images)
   const mediaUrls: string[] = [];
   if (Array.isArray(p.media) && p.media.length > 0) {
     p.media.forEach((m: any) => {
-      if (m?.url) mediaUrls.push(m.url);
+      if (m?.url && !mediaUrls.includes(m.url)) {
+        mediaUrls.push(m.url);
+      }
     });
   }
-  if (p.thumbnail?.url && !mediaUrls.includes(p.thumbnail.url)) {
-    mediaUrls.push(p.thumbnail.url);
-  }
-  if (mediaUrls.length === 0 && p.thumbnail?.mediaUrl) {
-    mediaUrls.push(p.thumbnail.mediaUrl);
+  // Only use thumbnail if media array is empty
+  if (mediaUrls.length === 0) {
+    const singleThumb = p.thumbnail?.url || p.thumbnail?.mediaUrl;
+    if (singleThumb) mediaUrls.push(singleThumb);
   }
 
   const allImages = mediaUrls.length > 0
-    ? mediaUrls.map((u) => resolveProductImage(u, `${p.name} ${p.slug}`, p.id))
+    ? Array.from(new Set(mediaUrls.map((u) => resolveProductImage(u, `${p.name} ${p.slug}`, p.id))))
     : [resolveProductImage(null, `${p.name} ${p.slug}`, p.id)];
 
   const activeImage = allImages[selectedImageIndex] || allImages[0];

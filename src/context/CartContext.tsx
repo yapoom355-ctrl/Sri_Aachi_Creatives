@@ -869,9 +869,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           });
 
         loadRazorpay()
-          .then(() => {
+          .then(async () => {
+            let activeRazorpayKey = "rzp_live_TTugxbb85oHrLR";
+            try {
+              const keyRes = await fetch("/api/checkout/razorpay-key");
+              const keyData = await keyRes.json();
+              if (keyData?.key) activeRazorpayKey = keyData.key;
+            } catch (e) {
+              console.warn("Could not fetch key from backend, using fallback", e);
+            }
+
             const options = {
-              key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_placeholder",
+              key: activeRazorpayKey,
               amount: amountInPaise,
               currency: "INR",
               name: "Sri Aachi Creatives",

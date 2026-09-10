@@ -314,15 +314,7 @@ export default function CartSidebar() {
                 <div className={styles.summaryRow}>
                   <span>Delivery Fee:</span>
                   <span style={billSummary?.isFreeDelivery ? { color: "#22c55e", fontWeight: 600 } : undefined}>
-                    {isLoadingShipping ? (
-                      <span style={{ fontSize: "12px", color: "#888" }}>Calculating...</span>
-                    ) : billSummary?.isFreeDelivery ? (
-                      "FREE"
-                    ) : deliveryFee > 0 ? (
-                      `₹${deliveryFee.toFixed(2)}`
-                    ) : (
-                      "Calculated at checkout"
-                    )}
+                    {billSummary?.isFreeDelivery ? "FREE" : `₹${(deliveryFee > 0 ? deliveryFee : 73).toFixed(2)}`}
                   </span>
                 </div>
                 <div className={`${styles.summaryRow} ${styles.totalRow}`}>

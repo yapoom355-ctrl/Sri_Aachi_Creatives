@@ -5,14 +5,16 @@ import { useRouter } from "next/navigation";
 import MobileContainer from "@/components/MobileContainer";
 import BottomNav from "@/components/BottomNav";
 import { useCart } from "@/context/CartContext";
-import { ChevronLeft, Plus, MapPin, Trash2, ShieldAlert } from "lucide-react";
+import { ChevronLeft, Plus, MapPin, Trash2, Edit2, ShieldAlert } from "lucide-react";
 import styles from "./page.module.css";
+import { BackendAddress } from "@/context/CartContext";
 
 export default function ShippingAddressesPage() {
   const router = useRouter();
   const {
     addresses,
     addAddress,
+    updateAddress,
     deleteAddress,
     setAddressAsDefault,
     isLoggedIn,
@@ -20,6 +22,7 @@ export default function ShippingAddressesPage() {
   } = useCart();
 
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<BackendAddress | null>(null);
   const [customerName, setCustomerName] = useState("");
   const [addressLine1, setAddressLine1] = useState("");
   const [addressLine2, setAddressLine2] = useState("");
@@ -31,7 +34,38 @@ export default function ShippingAddressesPage() {
   const [isPrimary, setIsPrimary] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleAddAddress = async (e: React.FormEvent) => {
+  const handleStartEdit = (addr: BackendAddress) => {
+    setEditingAddress(addr);
+    setCustomerName(addr.customerName || "");
+    setAddressLine1(addr.addressLine1 || "");
+    setAddressLine2(addr.addressLine2 || "");
+    setLandmark(addr.landmark || "");
+    setDistrict(addr.district || "");
+    setState(addr.state || "Tamil Nadu");
+    setPincode(addr.pincode || "");
+    setPhoneNumber(addr.phoneNumber || "");
+    setIsPrimary(Boolean(addr.isPrimary));
+    setShowAddForm(true);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingAddress(null);
+    setCustomerName("");
+    setAddressLine1("");
+    setAddressLine2("");
+    setLandmark("");
+    setDistrict("");
+    setState("");
+    setPincode("");
+    setPhoneNumber("");
+    setIsPrimary(false);
+    setShowAddForm(false);
+  };
+
+  const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerName.trim() || !addressLine1.trim() || !district.trim() || !state.trim() || !pincode.trim() || !phoneNumber.trim()) {
       alert("Please fill in all required fields.");
@@ -40,29 +74,33 @@ export default function ShippingAddressesPage() {
 
     setIsSaving(true);
     try {
-      await addAddress({
-        customerName: customerName.trim(),
-        addressLine1: addressLine1.trim(),
-        addressLine2: addressLine2.trim() || null,
-        landmark: landmark.trim() || null,
-        district: district.trim(),
-        state: state.trim(),
-        pincode: pincode.trim(),
-        phoneNumber: phoneNumber.trim(),
-        isPrimary,
-      });
+      if (editingAddress?.id) {
+        await updateAddress(editingAddress.id, {
+          customerName: customerName.trim(),
+          addressLine1: addressLine1.trim(),
+          addressLine2: addressLine2.trim() || null,
+          landmark: landmark.trim() || null,
+          district: district.trim(),
+          state: state.trim(),
+          pincode: pincode.trim(),
+          phoneNumber: phoneNumber.trim(),
+          isPrimary,
+        });
+      } else {
+        await addAddress({
+          customerName: customerName.trim(),
+          addressLine1: addressLine1.trim(),
+          addressLine2: addressLine2.trim() || null,
+          landmark: landmark.trim() || null,
+          district: district.trim(),
+          state: state.trim(),
+          pincode: pincode.trim(),
+          phoneNumber: phoneNumber.trim(),
+          isPrimary,
+        });
+      }
 
-      // Reset state
-      setCustomerName("");
-      setAddressLine1("");
-      setAddressLine2("");
-      setLandmark("");
-      setDistrict("");
-      setState("");
-      setPincode("");
-      setPhoneNumber("");
-      setIsPrimary(false);
-      setShowAddForm(false);
+      handleCancelEdit();
     } catch (err: any) {
       alert(err.message || "Failed to save address.");
     } finally {
@@ -159,12 +197,24 @@ export default function ShippingAddressesPage() {
 
                   <div className={styles.cardFooter}>
                     <button
-                      onClick={() => deleteAddress(addr.id)}
+                      onClick={() => handleStartEdit(addr)}
+                      className={styles.editBtn}
+                      type="button"
+                      aria-label="Edit address"
+                    >
+                      <Edit2 size={15} /> Edit
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm("Are you sure you want to delete this address?")) {
+                          deleteAddress(addr.id);
+                        }
+                      }}
                       className={styles.deleteBtn}
                       type="button"
                       aria-label="Delete address"
                     >
-                      <Trash2 size={16} /> Delete
+                      <Trash2 size={15} /> Delete
                     </button>
                   </div>
                 </div>
@@ -178,12 +228,33 @@ export default function ShippingAddressesPage() {
             </div>
           </div>
 
-          {/* Add Address Form Block */}
+          {/* Add / Edit Address Form Block */}
           <div className={`${styles.formCol} ${showAddForm ? styles.formColOpen : ""}`}>
             <div className={styles.dragHandle} />
             <div className={styles.formCard}>
-              <h3 className={styles.formTitle}>Add New Address</h3>
-              <form onSubmit={handleAddAddress} className={styles.addressForm}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                <h3 className={styles.formTitle} style={{ margin: 0 }}>
+                  {editingAddress ? "Edit Address" : "Add New Address"}
+                </h3>
+                {editingAddress && (
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#6b7280",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    Cancel Edit
+                  </button>
+                )}
+              </div>
+              <form onSubmit={handleSaveAddress} className={styles.addressForm}>
 
                 <div className={styles.inputGroup}>
                   <label className={styles.inputLabel}>Receiver Name *</label>
@@ -293,7 +364,7 @@ export default function ShippingAddressesPage() {
                 </div>
 
                 <button type="submit" className={styles.saveBtn} disabled={isSaving}>
-                  {isSaving ? "Saving..." : "Save Address"}
+                  {isSaving ? "Saving..." : editingAddress ? "Update Address" : "Save Address"}
                 </button>
               </form>
             </div>

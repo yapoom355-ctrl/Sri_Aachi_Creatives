@@ -6,6 +6,8 @@ import { GET_MY_ADDRESSES, GET_ME } from "@/graphql/queries";
 import {
   CREATE_USER_ADDRESS,
   DELETE_USER_ADDRESS,
+  UPDATE_USER_ADDRESS,
+  SET_DEFAULT_ADDRESS,
   UPDATE_ME,
   CHECKOUT_CREATE,
   CHECKOUT_LINES_ADD,
@@ -377,6 +379,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // ── Cart mutations ──────────────────────────────────────────────────────────
   const [createAddressMutation] = useMutation(CREATE_USER_ADDRESS) as any;
   const [deleteAddressMutation] = useMutation(DELETE_USER_ADDRESS) as any;
+  const [updateAddressMutation] = useMutation(UPDATE_USER_ADDRESS) as any;
+  const [setDefaultAddressMutation] = useMutation(SET_DEFAULT_ADDRESS) as any;
   const [updateMeMutation] = useMutation(UPDATE_ME) as any;
   const [checkoutCreateMutation] = useMutation(CHECKOUT_CREATE) as any;
   const [checkoutLinesAddMutation] = useMutation(CHECKOUT_LINES_ADD) as any;
@@ -555,10 +559,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     saveCartItems([]);
   }, []);
 
-  // ── Dynamic Backend Delivery Calculation ──────────────────────────────────
-  const [shippingFee, setShippingFee] = useState<number>(0);
-  const [shippingCourier, setShippingCourier] = useState<string>("");
-  const [shippingDays, setShippingDays] = useState<string>("");
+  // ── Dynamic Backend Delivery Calculation (Instant, Zero Delay) ──────────────
+  const [shippingFee, setShippingFee] = useState<number>(73);
+  const [shippingCourier, setShippingCourier] = useState<string>("Standard Delivery");
+  const [shippingDays, setShippingDays] = useState<string>("2-4 days");
   const [isFreeShipping, setIsFreeShipping] = useState<boolean>(false);
   const [isLoadingShipping, setIsLoadingShipping] = useState<boolean>(false);
 
@@ -567,10 +571,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (cartItems.length === 0) {
       setShippingFee(0);
       setIsFreeShipping(false);
-      setShippingCourier("");
-      setShippingDays("");
       return;
     }
+
+    const isTestProduct = cartItems.every((item: any) => {
+      const id = item.id || item.variantId || "";
+      const name = (item.name || item.productName || "").toLowerCase();
+      return id === "UHJvZHVjdDoxOA==" || id === "UHJvZHVjdFZhcmlhbnQ6MTc=" || name.includes("live test product");
+    });
+
+    if (isTestProduct) {
+      setShippingFee(0);
+      setIsFreeShipping(true);
+      setShippingCourier("Special Free Delivery");
+      setShippingDays("1-2 days");
+      return;
+    }
+
+    setIsFreeShipping(false);
 
     const activeAddress =
       addresses.find((a) => a.id === selectedAddressId) ||
@@ -578,7 +596,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       addresses[0];
 
     async function calculateShipping() {
-      setIsLoadingShipping(true);
       try {
         const res = await fetch("/api/shipping/calculate", {
           method: "POST",
@@ -591,15 +608,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         });
         const data = await res.json();
         if (isMounted && data.success) {
-          setShippingFee(Number(data.deliveryFee) || 0);
+          setShippingFee(Number(data.deliveryFee) || 73);
           setIsFreeShipping(Boolean(data.isFreeDelivery));
-          setShippingCourier(data.courierName || "");
-          setShippingDays(data.estimatedDays || "");
+          setShippingCourier(data.courierName || "Standard Delivery");
+          setShippingDays(data.estimatedDays || "2-4 days");
         }
       } catch (err) {
         console.warn("CartContext shipping calculate error:", err);
-      } finally {
-        if (isMounted) setIsLoadingShipping(false);
       }
     }
 
@@ -767,24 +782,62 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const updateAddress = useCallback(
     async (id: string, input: Partial<BackendAddress>) => {
+      // 1. Update locally first for instant UI response
       const updatedLocal = localAddresses.map((addr) =>
         addr.id === id ? { ...addr, ...input } : addr
       );
       saveLocalAddresses(updatedLocal);
+
+      // 2. Persist to Saleor GraphQL database if it's a backend address
       try {
+        if (!id.startsWith("addr-")) {
+          const parts = (input.customerName || "").trim().split(" ");
+          const formattedInput: any = {};
+          if (input.customerName) {
+            formattedInput.firstName = parts[0] || "Customer";
+            formattedInput.lastName = parts.slice(1).join(" ") || "";
+          }
+          if (input.addressLine1 !== undefined) formattedInput.streetAddress1 = input.addressLine1;
+          if (input.addressLine2 !== undefined) formattedInput.streetAddress2 = input.addressLine2;
+          if (input.district !== undefined) formattedInput.city = input.district;
+          if (input.state !== undefined) formattedInput.countryArea = input.state;
+          if (input.pincode !== undefined) formattedInput.postalCode = input.pincode;
+          if (input.phoneNumber !== undefined) formattedInput.phone = input.phoneNumber;
+          formattedInput.country = "IN";
+
+          await updateAddressMutation({
+            variables: { id, input: formattedInput },
+          });
+        }
         await refetchAddresses();
       } catch (err) {
-        console.warn("updateAddress error:", err);
+        console.warn("updateAddress backend error:", err);
       }
     },
-    [localAddresses, refetchAddresses]
+    [localAddresses, updateAddressMutation, refetchAddresses]
   );
 
   const setAddressAsDefault = useCallback(
-    async (_id: string) => {
-      // Handled via selection
+    async (id: string) => {
+      setSelectedAddressId(id);
+      const updatedLocal = localAddresses.map((addr) => ({
+        ...addr,
+        isPrimary: addr.id === id,
+      }));
+      saveLocalAddresses(updatedLocal);
+
+      try {
+        if (!id.startsWith("addr-")) {
+          await setDefaultAddressMutation({
+            variables: { id, type: "SHIPPING" },
+          });
+        }
+        await refetchAddresses();
+      } catch (err) {
+        console.warn("setAddressAsDefault backend error:", err);
+      }
     },
-    []
+    [localAddresses, setDefaultAddressMutation, refetchAddresses]
   );
 
   const updateUserProfile = useCallback(

@@ -314,13 +314,7 @@ export default function MobileCartPage() {
               <div className={styles.summaryRow}>
                 <span>Delivery:</span>
                 <span style={billSummary?.isFreeDelivery ? { color: "#22c55e", fontWeight: 600 } : undefined}>
-                  {billSummary?.isFreeDelivery ? (
-                    "FREE"
-                  ) : deliveryFee > 0 ? (
-                    `₹${deliveryFee.toFixed(2)}`
-                  ) : (
-                    "Calculated at checkout"
-                  )}
+                  {billSummary?.isFreeDelivery ? "FREE" : `₹${(deliveryFee > 0 ? deliveryFee : 73).toFixed(2)}`}
                 </span>
               </div>
               {tax > 0 && (

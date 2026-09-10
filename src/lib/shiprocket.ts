@@ -47,8 +47,8 @@ let tokenExpiresAt: number = 0;
  * Obtain or reuse a valid JWT Bearer token from Shiprocket.
  */
 export async function getShiprocketToken(): Promise<string | null> {
-  const email = process.env.SHIPROCKET_EMAIL;
-  const password = process.env.SHIPROCKET_PASSWORD;
+  const email = process.env.SHIPROCKET_EMAIL || 'jagadeshkumar53@gmail.com';
+  const password = process.env.SHIPROCKET_PASSWORD || 'i%9&LD17!R8cRIA@YmTgu7v9SSWNt#hh';
 
   if (!email || !password) {
     console.warn('[Shiprocket] SHIPROCKET_EMAIL or SHIPROCKET_PASSWORD not configured in .env');

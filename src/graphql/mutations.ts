@@ -260,6 +260,47 @@ export const DELETE_USER_ADDRESS = gql`
   }
 `;
 
+export const UPDATE_USER_ADDRESS = gql`
+  mutation AccountAddressUpdate($id: ID!, $input: AddressInput!) {
+    accountAddressUpdate(id: $id, input: $input) {
+      address {
+        id
+        firstName
+        lastName
+        streetAddress1
+        streetAddress2
+        city
+        postalCode
+        countryArea
+        phone
+      }
+      errors {
+        field
+        message
+        code
+      }
+    }
+  }
+`;
+
+export const SET_DEFAULT_ADDRESS = gql`
+  mutation AccountSetDefaultAddress($id: ID!, $type: AddressTypeEnum!) {
+    accountSetDefaultAddress(id: $id, type: $type) {
+      user {
+        id
+        defaultShippingAddress {
+          id
+        }
+      }
+      errors {
+        field
+        message
+        code
+      }
+    }
+  }
+`;
+
 export const CHECKOUT_SHIPPING_ADDRESS_UPDATE = gql`
   mutation CheckoutShippingAddressUpdate($checkoutId: ID, $shippingAddress: AddressInput!) {
     checkoutShippingAddressUpdate(id: $checkoutId, shippingAddress: $shippingAddress) {

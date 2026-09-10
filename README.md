@@ -35,5 +35,13 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# Gubera_2.0_theme_2
+## Key Integrations & Features
+
+- **Storefront**: Next.js App Router with custom responsive theme.
+- **Backend & Catalog**: Saleor Headless GraphQL API.
+- **Payment Gateway**: Razorpay (Prepaid) and Cash on Delivery (COD).
+- **Logistics & Delivery**: Shiprocket live courier serviceability & automatic AWB generation.
+  - **Special Rule**: Live ₹1 Test Product with 100% Free Shipping.
+  - **Dynamic Rates**: Real-time shipping fee calculation based on pickup and customer delivery pincodes.
+- **Address Management**: Full CRUD with instant pre-filling and database sync via Saleor GraphQL.
+

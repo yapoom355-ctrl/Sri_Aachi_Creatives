@@ -59,8 +59,61 @@ export default function CheckoutPage() {
     addresses.find((a) => a.isPrimary) ||
     addresses[0];
 
-  const billSummary = cart?.billSummary;
-  const deliveryFee = billSummary?.deliveryFee ?? 0;
+  // ── Dynamic Backend Delivery Calculation ──────────────────────────────────
+  const [deliveryFee, setDeliveryFee] = useState<number>(0);
+  const [isFreeDelivery, setIsFreeDelivery] = useState<boolean>(true);
+  const [shippingInfo, setShippingInfo] = useState<{
+    courierName?: string;
+    estimatedDays?: string;
+    rule?: string;
+  } | null>(null);
+  const [isLoadingShipping, setIsLoadingShipping] = useState<boolean>(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchShippingFee() {
+      if (!selectedAddress || cartItems.length === 0) {
+        setDeliveryFee(0);
+        setIsFreeDelivery(true);
+        setShippingInfo(null);
+        return;
+      }
+
+      setIsLoadingShipping(true);
+      try {
+        const res = await fetch("/api/shipping/calculate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cartItems,
+            deliveryPincode: selectedAddress.pincode,
+            paymentMethod,
+          }),
+        });
+        const data = await res.json();
+        if (isMounted && data.success) {
+          setDeliveryFee(Number(data.deliveryFee) || 0);
+          setIsFreeDelivery(Boolean(data.isFreeDelivery));
+          setShippingInfo({
+            courierName: data.courierName,
+            estimatedDays: data.estimatedDays,
+            rule: data.rule,
+          });
+        }
+      } catch (err) {
+        console.warn("Shipping calculate error:", err);
+      } finally {
+        if (isMounted) setIsLoadingShipping(false);
+      }
+    }
+
+    fetchShippingFee();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedAddress?.pincode, cartItems, paymentMethod]);
+
   const grandTotal = Math.max(0, subtotal - discountAmount + deliveryFee);
 
   const handleOpenAddAddress = () => {
@@ -100,10 +153,10 @@ export default function CheckoutPage() {
 
     try {
       if (paymentMethod === "RAZORPAY") {
-        const orderId = await checkoutWithRazorpay(selectedAddress.id);
+        const orderId = await checkoutWithRazorpay(selectedAddress.id, deliveryFee);
         router.replace(`/order/${orderId}`);
       } else {
-        const orderId = await checkoutWithCOD(selectedAddress.id);
+        const orderId = await checkoutWithCOD(selectedAddress.id, deliveryFee);
         router.replace(`/order/${orderId}`);
       }
     } catch (err: any) {
@@ -351,9 +404,27 @@ export default function CheckoutPage() {
                 </div>
               )}
               <div className={styles.summaryRow}>
-                <span className={styles.summaryLabel}>Delivery Charges</span>
-                <span className={styles.summaryValue}>
-                  {deliveryFee === 0 ? "FREE" : `₹${deliveryFee.toFixed(2)}`}
+                <span className={styles.summaryLabel}>
+                  Delivery Charges
+                  {shippingInfo?.courierName && (
+                    <span style={{ display: "block", fontSize: "11px", color: "#6b7280", fontWeight: "normal" }}>
+                      via {shippingInfo.courierName} {shippingInfo.estimatedDays ? `(${shippingInfo.estimatedDays})` : ""}
+                    </span>
+                  )}
+                  {shippingInfo?.rule === "TEST_PRODUCT_FREE" && (
+                    <span style={{ display: "block", fontSize: "11px", color: "#16a34a", fontWeight: "normal" }}>
+                      Test Product Special • Free Shipping
+                    </span>
+                  )}
+                </span>
+                <span className={styles.summaryValue} style={{ color: deliveryFee === 0 ? "#16a34a" : "inherit", fontWeight: deliveryFee === 0 ? 600 : "normal" }}>
+                  {isLoadingShipping ? (
+                    <span style={{ fontSize: "12px", color: "#9ca3af" }}>Calculating...</span>
+                  ) : deliveryFee === 0 ? (
+                    "FREE"
+                  ) : (
+                    `₹${deliveryFee.toFixed(2)}`
+                  )}
                 </span>
               </div>
 

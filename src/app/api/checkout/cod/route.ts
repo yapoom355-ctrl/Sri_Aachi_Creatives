@@ -36,7 +36,7 @@ async function getStaffToken(): Promise<string> {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { address, lines, userEmail, customerNote } = body;
+    const { address, lines, userEmail, customerNote, deliveryFee } = body;
 
     if (!address) {
       return NextResponse.json({ success: false, message: "Delivery address is required." }, { status: 400 });
@@ -161,13 +161,15 @@ export async function POST(req: NextRequest) {
     (async () => {
       try {
         const { createShiprocketOrder, generateShiprocketAWB } = await import('@/lib/shiprocket');
-        const { fulfillSaleorOrder } = await import('@/lib/saleorFulfillment');
+        const itemsTotal = lines.reduce((sum: number, l: any) => sum + (Number(l.unitPrice || l.price || 0) * Number(l.quantity || 1)), 0);
+        const orderBaseTotal = Number(completedOrder?.total?.gross?.amount || itemsTotal || 1);
+        const finalSubTotal = Math.round(orderBaseTotal + (Number(deliveryFee) || 0));
 
         const srRes = await createShiprocketOrder({
           orderId: completedOrder?.id || orderId,
           orderNumber: completedOrder?.number || orderId,
           paymentMethod: 'COD',
-          subTotal: completedOrder?.total?.gross?.amount || 100,
+          subTotal: finalSubTotal,
           customer: {
             firstName,
             lastName,

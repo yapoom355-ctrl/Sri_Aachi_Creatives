@@ -127,8 +127,8 @@ interface CartContextType {
   deleteAddress: (id: string) => Promise<void>;
   setAddressAsDefault: (id: string) => Promise<void>;
 
-  checkoutWithCOD: (addressId: string) => Promise<string>;
-  checkoutWithRazorpay: (addressId: string) => Promise<string>;
+  checkoutWithCOD: (addressId: string, customDeliveryFee?: number) => Promise<string>;
+  checkoutWithRazorpay: (addressId: string, customDeliveryFee?: number) => Promise<string>;
 
   isSidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
@@ -779,7 +779,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Real COD checkout: creates a genuine Saleor order via server-side draft order fulfillment
   const checkoutWithCOD = useCallback(
-    async (addressId: string): Promise<string> => {
+    async (addressId: string, customDeliveryFee?: number): Promise<string> => {
       if (!addressId) {
         throw new Error("Delivery address is required to proceed with checkout.");
       }
@@ -801,6 +801,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         user?.email ||
         (user?.phone ? `91${user.phone.replace(/\D/g, "").slice(-10)}@sriaachicreatives.in` : "customer@sriaachicreatives.in");
 
+      let delivery = customDeliveryFee;
+      if (delivery === undefined) {
+        try {
+          const shipRes = await fetch("/api/shipping/calculate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              cartItems,
+              deliveryPincode: targetAddress.pincode,
+              paymentMethod: "COD",
+            }),
+          });
+          const shipData = await shipRes.json();
+          delivery = shipData.deliveryFee ?? 0;
+        } catch {
+          delivery = 0;
+        }
+      }
+
       const res = await fetch("/api/checkout/cod", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -808,6 +827,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           address: targetAddress,
           lines: validLines,
           userEmail,
+          deliveryFee: delivery,
           customerNote: appliedCouponCode ? `Coupon applied: ${appliedCouponCode}` : "Cash on Delivery (COD)",
         }),
       });
@@ -825,7 +845,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Real Razorpay checkout: opens Razorpay, creates Saleor order on success
   const checkoutWithRazorpay = useCallback(
-    async (addressId: string): Promise<string> => {
+    async (addressId: string, customDeliveryFee?: number): Promise<string> => {
       if (!addressId) {
         throw new Error("Delivery address is required to proceed with checkout.");
       }
@@ -843,9 +863,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         throw new Error("No items in cart with valid product variants. Please re-add your items.");
       }
 
+      let delivery = customDeliveryFee;
+      if (delivery === undefined) {
+        try {
+          const shipRes = await fetch("/api/shipping/calculate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              cartItems,
+              deliveryPincode: targetAddress.pincode,
+              paymentMethod: "RAZORPAY",
+            }),
+          });
+          const shipData = await shipRes.json();
+          delivery = shipData.deliveryFee ?? 0;
+        } catch {
+          delivery = 0;
+        }
+      }
+
       // Calculate grand total in paise
       const itemTotal = cartItems.reduce((acc, i) => acc + i.numericPrice * i.quantity, 0);
-      const delivery = itemTotal > 500 || itemTotal === 0 ? 0 : 40;
       const grandTotal = Math.max(0, itemTotal - discountAmount + delivery);
       const amountInPaise = Math.round(grandTotal * 100);
 
@@ -901,6 +939,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                       address: targetAddress,
                       lines: validLines,
                       userEmail,
+                      deliveryFee: delivery,
                       razorpayPaymentId: response.razorpay_payment_id,
                     }),
                   });

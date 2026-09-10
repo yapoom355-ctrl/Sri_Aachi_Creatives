@@ -249,3 +249,82 @@ export async function trackShiprocketShipment(awbCode: string) {
     return { success: false, error };
   }
 }
+
+/**
+ * Check courier serviceability and calculate lowest live courier shipping rate from Shiprocket.
+ */
+export interface CalculateShippingParams {
+  deliveryPincode: string;
+  weight?: number; // in kg
+  isCod?: boolean;
+}
+
+export async function calculateShiprocketShippingRate(params: CalculateShippingParams) {
+  const token = await getShiprocketToken();
+  if (!token) {
+    return {
+      success: false,
+      rate: 60,
+      courierName: 'Standard Delivery',
+      estimatedDays: '3-5',
+    };
+  }
+
+  const pickupPostcode = process.env.SHIPROCKET_PICKUP_PINCODE || '562149';
+  const deliveryPostcode = (params.deliveryPincode || '').replace(/\D/g, '');
+  const weight = Math.max(0.5, params.weight || 0.5);
+  const cod = params.isCod ? 1 : 0;
+
+  if (!deliveryPostcode || deliveryPostcode.length !== 6) {
+    return {
+      success: false,
+      rate: 60,
+      courierName: 'Standard Delivery',
+      estimatedDays: '3-5',
+    };
+  }
+
+  try {
+    const url = `https://apiv2.shiprocket.in/v1/external/courier/serviceability/?pickup_postcode=${pickupPostcode}&delivery_postcode=${deliveryPostcode}&weight=${weight}&cod=${cod}`;
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+    const couriers = data?.data?.available_courier_companies;
+
+    if (Array.isArray(couriers) && couriers.length > 0) {
+      // Sort by rate ascending to find the cheapest courier
+      const sorted = [...couriers].sort((a, b) => Number(a.rate) - Number(b.rate));
+      const best = sorted[0];
+      return {
+        success: true,
+        rate: Math.round(Number(best.rate)),
+        rawRate: Number(best.rate),
+        courierName: best.courier_name,
+        courierId: best.courier_company_id,
+        estimatedDays: best.estimated_delivery_days || '2-4',
+      };
+    }
+
+    return {
+      success: false,
+      rate: 60,
+      courierName: 'Standard Delivery',
+      estimatedDays: '3-5',
+      message: 'No specific courier returned; default flat rate applied',
+    };
+  } catch (error) {
+    console.error('[Shiprocket Rate Calculation Exception]', error);
+    return {
+      success: false,
+      rate: 60,
+      courierName: 'Standard Delivery',
+      estimatedDays: '3-5',
+    };
+  }
+}

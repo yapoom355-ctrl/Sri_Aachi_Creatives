@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@apollo/client/react";
 import MobileContainer from "@/components/MobileContainer";
 import BottomNav from "@/components/BottomNav";
 import { useCart } from "@/context/CartContext";
@@ -36,9 +35,29 @@ interface MenuItem {
 export default function ProfilePage() {
   const router = useRouter();
   const { isLoggedIn, user, logout, setLoginModalOpen, cartCount, updateUserProfile } = useCart();
+  const [ordersCount, setOrdersCount] = useState<number>(0);
 
-  const { data: ordersData } = useQuery<any>(GET_ORDERS, { skip: !isLoggedIn });
-  const ordersCount = ordersData?.me?.orders?.edges?.length ?? ordersData?.myOrders?.length ?? 0;
+  useEffect(() => {
+    let placedIds: string[] = [];
+    if (typeof window !== "undefined") {
+      try {
+        placedIds = JSON.parse(localStorage.getItem("placed_order_ids") || "[]");
+      } catch {}
+    }
+    const params = new URLSearchParams();
+    if (user?.email) params.append("email", user.email);
+    if (user?.phone) params.append("phone", user.phone);
+    if (placedIds.length > 0) params.append("orderIds", placedIds.join(","));
+
+    fetch(`/api/orders?${params.toString()}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && typeof d.count === "number") {
+          setOrdersCount(d.count);
+        }
+      })
+      .catch(() => {});
+  }, [isLoggedIn, user]);
 
   // Edit profile state
   const [isEditing, setIsEditing] = useState(false);

@@ -318,6 +318,10 @@ export const GET_ORDER = gql`
           currency
         }
       }
+      metadata {
+        key
+        value
+      }
       shippingAddress {
         firstName
         lastName

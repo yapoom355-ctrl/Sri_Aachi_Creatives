@@ -11,6 +11,8 @@ interface DetailsAddToCartProps {
   customInstructions?: string;
   customImage?: string;
   customImageName?: string;
+  isCustomizationRequired?: boolean;
+  onValidationFailed?: () => void;
   itemDetails?: {
     name?: string;
     subtitle?: string;
@@ -26,6 +28,8 @@ export default function DetailsAddToCart({
   customInstructions,
   customImage,
   customImageName,
+  isCustomizationRequired = false,
+  onValidationFailed,
   itemDetails,
 }: DetailsAddToCartProps) {
   const { addToCart, cartItems, updateQuantity } = useCart();
@@ -42,6 +46,14 @@ export default function DetailsAddToCart({
   const quantity = cartItem ? cartItem.quantity : 0;
 
   const handleIncrement = () => {
+    // If customization is required (e.g. Coffee Mugs, T-shirts), user must provide text or photo
+    if (isCustomizationRequired && !trimmedInstructions && !activeImage) {
+      if (onValidationFailed) {
+        onValidationFailed();
+      }
+      return;
+    }
+
     if (quantity === 0) {
       addToCart(productId, 1, {
         ...itemDetails,

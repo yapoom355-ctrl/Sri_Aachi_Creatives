@@ -3,9 +3,10 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Plus, Minus, X, ChevronLeft, ShoppingBag, MapPin, Wallet, CreditCard } from "lucide-react";
+import { Plus, Minus, X, ChevronLeft, ShoppingBag, MapPin, Wallet, CreditCard, Trash2 } from "lucide-react";
 import MobileContainer from "@/components/MobileContainer";
 import BottomNav from "@/components/BottomNav";
+import AddressModal from "@/components/AddressModal";
 import { useCart } from "@/context/CartContext";
 import styles from "./page.module.css";
 
@@ -28,6 +29,7 @@ export default function MobileCartPage() {
     addressesLoading,
     selectedAddressId,
     selectAddress,
+    deleteAddress,
     checkoutWithCOD,
     checkoutWithRazorpay,
     isLoggedIn,
@@ -36,6 +38,7 @@ export default function MobileCartPage() {
 
   const [promoCode, setPromoCode] = useState("");
   const [isSelectingAddress, setIsSelectingAddress] = useState(false);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -70,6 +73,25 @@ export default function MobileCartPage() {
       setCheckoutError("Your cart is empty.");
       return;
     }
+
+    if (addresses.length === 0 || !selectedAddress) {
+      setCheckoutError("Please add your delivery address before proceeding to checkout.");
+      setIsAddressModalOpen(true);
+      return;
+    }
+
+    const uncustomizedItem = cartItems.find((item) => {
+      const name = (item.name || "").toLowerCase();
+      const isCustomProd = name.includes("mug") || name.includes("t-shirt") || name.includes("tshirt");
+      return isCustomProd && !item.customInstructions?.trim() && !item.customImage;
+    });
+
+    if (uncustomizedItem) {
+      alert(`⚠️ Personalization Required: Please add custom text or attach a photo for "${uncustomizedItem.name}" before proceeding to checkout.`);
+      router.push(`/product/${uncustomizedItem.id}`);
+      return;
+    }
+
     router.push("/checkout");
   };
 
@@ -239,9 +261,9 @@ export default function MobileCartPage() {
                   <button
                     type="button"
                     className={styles.addAddressLink}
-                    onClick={() => router.push("/addresses")}
+                    onClick={() => setIsAddressModalOpen(true)}
                   >
-                    Add Address
+                    + Add Address
                   </button>
                 </div>
               ) : (
@@ -250,9 +272,32 @@ export default function MobileCartPage() {
                     <div className={styles.selectedAddressCard}>
                       <div className={styles.selectedHeader}>
                         <span className={styles.selectedName}>{selectedAddress.customerName}</span>
-                        {selectedAddress.isPrimary && (
-                          <span className={styles.miniBadge}>Default</span>
-                        )}
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          {selectedAddress.isPrimary && (
+                            <span className={styles.miniBadge}>Default</span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteAddress(selectedAddress.id);
+                            }}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              padding: "4px",
+                              color: "#ef4444",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              borderRadius: "4px",
+                            }}
+                            title="Delete this address"
+                            aria-label="Delete address"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </div>
                       <p className={styles.selectedStreet}>{selectedAddress.addressLine1}</p>
                       <p className={styles.selectedCity}>
@@ -277,7 +322,30 @@ export default function MobileCartPage() {
                           >
                             <div className={styles.selectorHeader}>
                               <span className={styles.selectorName}>{addr.customerName}</span>
-                              {addr.isPrimary && <span className={styles.miniBadge}>Default</span>}
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                {addr.isPrimary && <span className={styles.miniBadge}>Default</span>}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteAddress(addr.id);
+                                  }}
+                                  style={{
+                                    background: "none",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    padding: "4px",
+                                    color: "#ef4444",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    borderRadius: "4px",
+                                  }}
+                                  title="Delete this address"
+                                  aria-label="Delete address"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
                             </div>
                             <p className={styles.selectorStreet}>{addr.addressLine1}</p>
                             <p className={styles.selectorCity}>
@@ -289,7 +357,10 @@ export default function MobileCartPage() {
                       <button
                         type="button"
                         className={styles.manageAddressBtnInline}
-                        onClick={() => router.push("/addresses")}
+                        onClick={() => {
+                          setIsSelectingAddress(false);
+                          setIsAddressModalOpen(true);
+                        }}
                       >
                         + Add New Address
                       </button>
@@ -370,6 +441,11 @@ export default function MobileCartPage() {
           </div>
         )}
       </main>
+
+      <AddressModal
+        isOpen={isAddressModalOpen}
+        onClose={() => setIsAddressModalOpen(false)}
+      />
 
       <BottomNav />
     </MobileContainer>

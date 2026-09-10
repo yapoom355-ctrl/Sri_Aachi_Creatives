@@ -31,6 +31,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const customizationCardRef = useRef<HTMLDivElement>(null);
 
   // ── Customization State ──────────────────────────────────────────────────
   const [customInstructions, setCustomInstructions] = useState("");
@@ -38,6 +39,7 @@ export default function ProductPage({ params }: ProductPageProps) {
   const [customImageName, setCustomImageName] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const { data, loading, error } = useQuery<any>(GET_PRODUCT, {
@@ -229,6 +231,28 @@ export default function ProductPage({ params }: ProductPageProps) {
     limited: false,
   };
 
+  const catSlug = (p?.category?.slug || "").toLowerCase();
+  const catName = (p?.category?.name || p?.categories?.[0]?.title || "").toLowerCase();
+  const prodName = (product?.name || "").toLowerCase();
+
+  const isCustomizationRequired =
+    catSlug.includes("mug") ||
+    catSlug.includes("t-shirt") ||
+    catSlug.includes("tshirt") ||
+    catName.includes("mug") ||
+    catName.includes("t-shirt") ||
+    catName.includes("tshirt") ||
+    prodName.includes("mug") ||
+    prodName.includes("t-shirt") ||
+    prodName.includes("tshirt") ||
+    p?.category?.id === "Q2F0ZWdvcnk6Nw==" ||
+    p?.category?.id === "Q2F0ZWdvcnk6OA==";
+
+  const handleValidationFailed = () => {
+    setValidationError("⚠️ Customization Required: Please enter your text/name or attach a photo before adding this item to cart.");
+    customizationCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
   return (
     <div className={styles.pageWrapper}>
       <ProductDetailsHeader />
@@ -293,26 +317,78 @@ export default function ProductPage({ params }: ProductPageProps) {
           <p className={styles.description}>{product.description}</p>
 
           {/* ── Customization & Personalization Section ── */}
-          <div className={styles.customizationCard}>
+          <div
+            ref={customizationCardRef}
+            className={styles.customizationCard}
+            style={{
+              borderColor: validationError ? "#ef4444" : undefined,
+              boxShadow: validationError ? "0 0 0 2px rgba(239, 68, 68, 0.2)" : undefined,
+              transition: "border-color 0.2s, box-shadow 0.2s",
+            }}
+          >
+            {validationError && (
+              <div
+                style={{
+                  background: "#fef2f2",
+                  border: "1px solid #f87171",
+                  color: "#991b1b",
+                  padding: "10px 14px",
+                  borderRadius: "10px",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  marginBottom: "12px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <span>{validationError}</span>
+              </div>
+            )}
+
             <div className={styles.customizationHeader}>
               <div className={styles.customizationTitle}>
                 <Sparkles size={16} color="#6366f1" />
                 <span>Customization & Personalization</span>
               </div>
-              <span className={styles.customizationBadge}>FREE</span>
+              {isCustomizationRequired ? (
+                <span
+                  style={{
+                    background: "#fee2e2",
+                    color: "#dc2626",
+                    border: "1px solid #fca5a5",
+                    fontSize: "10.5px",
+                    fontWeight: "700",
+                    padding: "3px 8px",
+                    borderRadius: "6px",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  REQUIRED *
+                </span>
+              ) : (
+                <span className={styles.customizationBadge}>FREE</span>
+              )}
             </div>
 
             {/* Field 1: Text / Name / Message */}
             <div className={styles.customFieldGroup}>
               <label className={styles.customFieldLabel} htmlFor="custom-instructions">
-                1. Custom Name / Text / Message
+                1. Custom Name / Text / Message {isCustomizationRequired && <span style={{ color: "#dc2626", fontWeight: "bold" }}>*</span>}
               </label>
               <textarea
                 id="custom-instructions"
                 className={styles.customTextInput}
-                placeholder="Enter names, date, quote, or printing instructions (e.g. Priya & Rahul 14.02.2024)..."
+                placeholder={
+                  isCustomizationRequired
+                    ? "Enter names, date, quote, or printing instructions (or attach your photo below)..."
+                    : "Enter names, date, quote, or printing instructions (e.g. Priya & Rahul 14.02.2024)..."
+                }
                 value={customInstructions}
-                onChange={(e) => setCustomInstructions(e.target.value)}
+                onChange={(e) => {
+                  setCustomInstructions(e.target.value);
+                  if (validationError) setValidationError(null);
+                }}
                 rows={2}
               />
             </div>
@@ -320,13 +396,16 @@ export default function ProductPage({ params }: ProductPageProps) {
             {/* Field 2: Photo / Artwork Upload */}
             <div className={styles.customFieldGroup}>
               <label className={styles.customFieldLabel}>
-                2. Attach Photo or Design (Optional)
+                2. Attach Photo or Design {isCustomizationRequired ? "(or enter text above)" : "(Optional)"}
               </label>
 
               <input
                 type="file"
                 ref={fileInputRef}
-                onChange={handleFileUpload}
+                onChange={(e) => {
+                  handleFileUpload(e);
+                  if (validationError) setValidationError(null);
+                }}
                 accept="image/png, image/jpeg, image/webp"
                 style={{ display: "none" }}
               />
@@ -416,6 +495,8 @@ export default function ProductPage({ params }: ProductPageProps) {
               customInstructions={customInstructions}
               customImage={customImage}
               customImageName={customImageName}
+              isCustomizationRequired={isCustomizationRequired}
+              onValidationFailed={handleValidationFailed}
               itemDetails={{
                 name: product.name,
                 subtitle: product.subtitle,

@@ -129,9 +129,7 @@ export default function CheckoutPage() {
 
   const handleDeleteAddress = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("Are you sure you want to delete this address?")) {
-      await deleteAddress(id);
-    }
+    await deleteAddress(id);
   };
 
   const handlePlaceOrder = async () => {
@@ -145,6 +143,18 @@ export default function CheckoutPage() {
     }
     if (!selectedAddress) {
       setCheckoutError("Please add and select a delivery address.");
+      return;
+    }
+
+    // Check if any customizable item (mugs, t-shirts, etc.) lacks both custom text and custom image
+    const uncustomizedItem = cartItems.find((item) => {
+      const name = (item.name || "").toLowerCase();
+      const isCustomProd = name.includes("mug") || name.includes("t-shirt") || name.includes("tshirt");
+      return isCustomProd && !item.customInstructions?.trim() && !item.customImage;
+    });
+
+    if (uncustomizedItem) {
+      setCheckoutError(`Customization required: Please customize "${uncustomizedItem.name}" with your text or photo before placing order.`);
       return;
     }
 

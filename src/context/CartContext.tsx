@@ -350,6 +350,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     fetchPolicy: "cache-and-network",
   }) as any;
 
+  const [deletedAddressIds, setDeletedAddressIds] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return JSON.parse(localStorage.getItem("deleted_address_ids") || "[]");
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+
   const rawAddresses = addressData?.me?.addresses || [];
   const backendAddresses: BackendAddress[] = rawAddresses.map((a: any) => ({
     id: a.id,
@@ -367,7 +378,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const addresses: BackendAddress[] = [
     ...backendAddresses,
     ...localAddresses.filter((la) => !backendAddresses.some((ba) => ba.id === la.id)),
-  ];
+  ].filter((a) => !deletedAddressIds.includes(a.id));
 
   useEffect(() => {
     if (addresses.length > 0 && !selectedAddressId) {
@@ -762,22 +773,59 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const deleteAddress = useCallback(
     async (id: string) => {
-      // 1. Remove from local state
-      const updatedLocal = localAddresses.filter((a) => a.id !== id);
-      saveLocalAddresses(updatedLocal);
-      if (selectedAddressId === id) setSelectedAddressId(null);
+      console.log("[CartContext] deleteAddress invoked for ID:", id);
 
-      // 2. Try Saleor mutation if backend address ID
+      // 1. Instantly mark as deleted in state & localStorage
+      setDeletedAddressIds((prev) => {
+        const next = Array.from(new Set([...prev, id]));
+        if (typeof window !== "undefined") {
+          localStorage.setItem("deleted_address_ids", JSON.stringify(next));
+        }
+        return next;
+      });
+
+      // 2. Immediately remove from local state & localStorage
+      setLocalAddresses((prev) => {
+        const next = prev.filter((a) => a.id !== id);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("local_addresses", JSON.stringify(next));
+        }
+        return next;
+      });
+
+      // 3. Immediately switch selectedAddressId to next available address
+      setSelectedAddressId((currentSelected) => {
+        const remaining = addresses.filter((a) => a.id !== id);
+        if (currentSelected === id || !currentSelected || !remaining.some((a) => a.id === currentSelected)) {
+          return remaining[0]?.id || null;
+        }
+        return currentSelected;
+      });
+
+      // 4. Delete from Saleor DB via server endpoint (staff-authenticated)
+      try {
+        const res = await fetch("/api/addresses/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id }),
+        });
+        const data = await res.json();
+        console.log("[CartContext] /api/addresses/delete response:", data);
+      } catch (err) {
+        console.warn("Server-side address delete error:", err);
+      }
+
+      // 5. Also execute client mutation & refetch backend addresses
       try {
         if (!id.startsWith("addr-")) {
-          await deleteAddressMutation({ variables: { id } });
-          await refetchAddresses();
+          await deleteAddressMutation({ variables: { id } }).catch(() => {});
+          await refetchAddresses().catch(() => {});
         }
       } catch (err) {
-        console.warn("deleteAddress error:", err);
+        console.warn("Client deleteAddress mutation error:", err);
       }
     },
-    [deleteAddressMutation, refetchAddresses, localAddresses, selectedAddressId]
+    [deleteAddressMutation, refetchAddresses, addresses]
   );
 
   const updateAddress = useCallback(
@@ -906,7 +954,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       const validLines = cartItems
         .filter((item) => item.variantId)
-        .map((item) => ({ variantId: item.variantId!, quantity: item.quantity }));
+        .map((item) => ({
+          variantId: item.variantId!,
+          quantity: item.quantity,
+          name: item.name,
+          productId: item.id,
+          customInstructions: item.customInstructions || "",
+          customImage: item.customImage || "",
+          customImageName: item.customImageName || "",
+        }));
 
       if (validLines.length === 0) {
         throw new Error("No items in cart with valid product variants. Please re-add your items.");
@@ -952,6 +1008,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         throw new Error(data.message || "Failed to place COD order.");
       }
 
+      if (typeof window !== "undefined" && data.orderId) {
+        try {
+          const existing = JSON.parse(localStorage.getItem("placed_order_ids") || "[]");
+          if (!existing.includes(data.orderId)) {
+            existing.unshift(data.orderId);
+            localStorage.setItem("placed_order_ids", JSON.stringify(existing));
+          }
+        } catch {}
+      }
+
       await clearCart();
       return data.orderId;
     },
@@ -972,7 +1038,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       const validLines = cartItems
         .filter((item) => item.variantId)
-        .map((item) => ({ variantId: item.variantId!, quantity: item.quantity }));
+        .map((item) => ({
+          variantId: item.variantId!,
+          quantity: item.quantity,
+          name: item.name,
+          productId: item.id,
+          customInstructions: item.customInstructions || "",
+          customImage: item.customImage || "",
+          customImageName: item.customImageName || "",
+        }));
 
       if (validLines.length === 0) {
         throw new Error("No items in cart with valid product variants. Please re-add your items.");
@@ -1062,6 +1136,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                   const data = await res.json();
                   if (!res.ok || !data.success) {
                     throw new Error(data.message || "Failed to record payment in store.");
+                  }
+
+                  if (typeof window !== "undefined" && data.orderId) {
+                    try {
+                      const existing = JSON.parse(localStorage.getItem("placed_order_ids") || "[]");
+                      if (!existing.includes(data.orderId)) {
+                        existing.unshift(data.orderId);
+                        localStorage.setItem("placed_order_ids", JSON.stringify(existing));
+                      }
+                    } catch {}
                   }
 
                   await clearCart();

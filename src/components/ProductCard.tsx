@@ -20,12 +20,28 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const liked = wishlist ? wishlist.includes(product.id) : false;
   const [imgSrc, setImgSrc] = useState(product.image || "/images/resin-memory-block.jpg");
 
+  const prodName = (product.name || "").toLowerCase();
+  const prodSub = (product.subtitle || "").toLowerCase();
+  const isCustomizable =
+    prodName.includes("mug") ||
+    prodName.includes("t-shirt") ||
+    prodName.includes("tshirt") ||
+    prodSub.includes("mug") ||
+    prodSub.includes("t-shirt") ||
+    prodSub.includes("tshirt") ||
+    product.category === "Q2F0ZWdvcnk6Nw==" ||
+    product.category === "Q2F0ZWdvcnk6OA==";
+
   const cartItem = cartItems.find((i) => i.id === product.id);
   const quantity = cartItem ? cartItem.quantity : 0;
 
   const handleIncrement = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    if (isCustomizable) {
+      router.push(`/product/${product.id}`);
+      return;
+    }
     if (quantity === 0) {
       addToCart(product.id, 1, {
         name: product.name,

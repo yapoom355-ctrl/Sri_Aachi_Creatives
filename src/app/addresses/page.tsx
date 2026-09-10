@@ -40,7 +40,7 @@ export default function ShippingAddressesPage() {
       const cleanPhone = (user.phone || "").replace(/\D/g, "").slice(-10);
       setPhoneNumber((prev) => prev || cleanPhone);
     }
-    if (!editingAddress && user?.name && user.name !== "User") {
+    if (!editingAddress && user?.name && !user.name.toLowerCase().startsWith("user")) {
       setCustomerName((prev) => prev || user.name);
     }
   }, [user, editingAddress]);
@@ -52,7 +52,7 @@ export default function ShippingAddressesPage() {
     setAddressLine2(addr.addressLine2 || "");
     setLandmark(addr.landmark || "");
     setDistrict(addr.district || "");
-    setState(addr.state || "Tamil Nadu");
+    setState(addr.state || "");
     setPincode(addr.pincode || "");
     setPhoneNumber(addr.phoneNumber || "");
     setIsPrimary(Boolean(addr.isPrimary));
@@ -306,7 +306,7 @@ export default function ShippingAddressesPage() {
                   <label className={styles.inputLabel}>Landmark (Optional)</label>
                   <input
                     type="text"
-                    placeholder="e.g. Near Big Ben"
+                    placeholder="e.g. Near Bus Stand / Temple"
                     value={landmark}
                     onChange={(e) => setLandmark(e.target.value)}
                     className={styles.textInput}
@@ -317,7 +317,7 @@ export default function ShippingAddressesPage() {
                   <label className={styles.inputLabel}>District *</label>
                   <input
                     type="text"
-                    placeholder="e.g. Westminster"
+                    placeholder="e.g. Chennai, Salem"
                     value={district}
                     onChange={(e) => setDistrict(e.target.value)}
                     className={styles.textInput}
@@ -329,7 +329,7 @@ export default function ShippingAddressesPage() {
                   <label className={styles.inputLabel}>State *</label>
                   <input
                     type="text"
-                    placeholder="e.g. London"
+                    placeholder="e.g. Tamil Nadu"
                     value={state}
                     onChange={(e) => setState(e.target.value)}
                     className={styles.textInput}
@@ -341,7 +341,7 @@ export default function ShippingAddressesPage() {
                   <label className={styles.inputLabel}>Pincode / Zipcode *</label>
                   <input
                     type="text"
-                    placeholder="e.g. NW16XE"
+                    placeholder="e.g. 600001"
                     value={pincode}
                     onChange={(e) => setPincode(e.target.value)}
                     className={styles.textInput}
@@ -353,7 +353,7 @@ export default function ShippingAddressesPage() {
                   <label className={styles.inputLabel}>Phone Number *</label>
                   <input
                     type="tel"
-                    placeholder="e.g. +442079460958"
+                    placeholder="e.g. 9876543210"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     className={styles.textInput}

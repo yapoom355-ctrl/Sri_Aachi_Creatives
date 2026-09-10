@@ -19,7 +19,7 @@ export default function AddressModal({ isOpen, onClose, addressToEdit }: Address
   const [addressLine1, setAddressLine1] = useState("");
   const [addressLine2, setAddressLine2] = useState("");
   const [district, setDistrict] = useState("");
-  const [state, setState] = useState("Tamil Nadu");
+  const [state, setState] = useState("");
   const [pincode, setPincode] = useState("");
   const [isPrimary, setIsPrimary] = useState(false);
   const [error, setError] = useState("");
@@ -32,17 +32,17 @@ export default function AddressModal({ isOpen, onClose, addressToEdit }: Address
       setAddressLine1(addressToEdit.addressLine1 || "");
       setAddressLine2(addressToEdit.addressLine2 || "");
       setDistrict(addressToEdit.district || "");
-      setState(addressToEdit.state || "Tamil Nadu");
+      setState(addressToEdit.state || "");
       setPincode(addressToEdit.pincode || "");
       setIsPrimary(!!addressToEdit.isPrimary);
     } else {
-      setCustomerName(user?.name && user.name !== "User" ? user.name : "");
+      setCustomerName(user?.name && !user.name.toLowerCase().startsWith("user") ? user.name : "");
       const cleanPhone = (user?.phone || "").replace(/\D/g, "").slice(-10);
       setPhoneNumber(cleanPhone);
       setAddressLine1("");
       setAddressLine2("");
       setDistrict("");
-      setState("Tamil Nadu");
+      setState("");
       setPincode("");
       setIsPrimary(false);
     }
@@ -200,6 +200,7 @@ export default function AddressModal({ isOpen, onClose, addressToEdit }: Address
               <label className={styles.label}>State *</label>
               <input
                 type="text"
+                placeholder="e.g. Tamil Nadu"
                 value={state}
                 onChange={(e) => setState(e.target.value)}
                 className={styles.input}

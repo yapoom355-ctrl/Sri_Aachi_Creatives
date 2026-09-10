@@ -311,12 +311,18 @@ export default function MobileCartPage() {
                   <span style={{ color: "#22c55e" }}>-₹{discountAmount.toFixed(2)}</span>
                 </div>
               )}
-              {deliveryFee > 0 && (
-                <div className={styles.summaryRow}>
-                  <span>Delivery:</span>
-                  <span>₹{deliveryFee.toFixed(2)}</span>
-                </div>
-              )}
+              <div className={styles.summaryRow}>
+                <span>Delivery:</span>
+                <span style={billSummary?.isFreeDelivery ? { color: "#22c55e", fontWeight: 600 } : undefined}>
+                  {billSummary?.isFreeDelivery ? (
+                    "FREE"
+                  ) : deliveryFee > 0 ? (
+                    `₹${deliveryFee.toFixed(2)}`
+                  ) : (
+                    "Calculated at checkout"
+                  )}
+                </span>
+              </div>
               {tax > 0 && (
                 <div className={styles.summaryRow}>
                   <span>Tax:</span>

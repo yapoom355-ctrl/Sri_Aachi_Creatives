@@ -61,7 +61,7 @@ export default function CheckoutPage() {
 
   // ── Dynamic Backend Delivery Calculation ──────────────────────────────────
   const [deliveryFee, setDeliveryFee] = useState<number>(0);
-  const [isFreeDelivery, setIsFreeDelivery] = useState<boolean>(true);
+  const [isFreeDelivery, setIsFreeDelivery] = useState<boolean>(false);
   const [shippingInfo, setShippingInfo] = useState<{
     courierName?: string;
     estimatedDays?: string;
@@ -73,9 +73,9 @@ export default function CheckoutPage() {
     let isMounted = true;
 
     async function fetchShippingFee() {
-      if (!selectedAddress || cartItems.length === 0) {
+      if (cartItems.length === 0) {
         setDeliveryFee(0);
-        setIsFreeDelivery(true);
+        setIsFreeDelivery(false);
         setShippingInfo(null);
         return;
       }
@@ -87,7 +87,7 @@ export default function CheckoutPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             cartItems,
-            deliveryPincode: selectedAddress.pincode,
+            deliveryPincode: selectedAddress?.pincode || "",
             paymentMethod,
           }),
         });
@@ -417,13 +417,15 @@ export default function CheckoutPage() {
                     </span>
                   )}
                 </span>
-                <span className={styles.summaryValue} style={{ color: deliveryFee === 0 ? "#16a34a" : "inherit", fontWeight: deliveryFee === 0 ? 600 : "normal" }}>
+                <span className={styles.summaryValue} style={{ color: isFreeDelivery ? "#16a34a" : "inherit", fontWeight: isFreeDelivery ? 600 : "normal" }}>
                   {isLoadingShipping ? (
                     <span style={{ fontSize: "12px", color: "#9ca3af" }}>Calculating...</span>
-                  ) : deliveryFee === 0 ? (
+                  ) : isFreeDelivery ? (
                     "FREE"
-                  ) : (
+                  ) : deliveryFee > 0 ? (
                     `₹${deliveryFee.toFixed(2)}`
+                  ) : (
+                    "Calculated at checkout"
                   )}
                 </span>
               </div>

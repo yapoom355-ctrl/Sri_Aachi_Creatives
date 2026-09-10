@@ -25,6 +25,9 @@ export default function CartSidebar() {
     selectedAddressId,
     selectAddress,
     deleteAddress,
+    cart,
+    isFreeShipping,
+    isLoadingShipping,
   } = useCart();
 
   const [promoCode, setPromoCode] = useState("");
@@ -35,7 +38,7 @@ export default function CartSidebar() {
     || addresses.find((a) => a.isPrimary)
     || addresses[0];
 
-  const billSummary = useCart().cart?.billSummary;
+  const billSummary = cart?.billSummary;
   const deliveryFee = billSummary?.deliveryFee ?? 0;
   const discountDisplay = billSummary?.discountApplied ?? discountAmount;
   const totalAmount = billSummary?.grandTotal ?? Math.max(0, subtotal - discountDisplay + deliveryFee);
@@ -310,8 +313,16 @@ export default function CartSidebar() {
                 )}
                 <div className={styles.summaryRow}>
                   <span>Delivery Fee:</span>
-                  <span style={deliveryFee === 0 ? { color: "#22c55e", fontWeight: 600 } : undefined}>
-                    {deliveryFee === 0 ? "FREE" : `₹${deliveryFee.toFixed(2)}`}
+                  <span style={billSummary?.isFreeDelivery ? { color: "#22c55e", fontWeight: 600 } : undefined}>
+                    {isLoadingShipping ? (
+                      <span style={{ fontSize: "12px", color: "#888" }}>Calculating...</span>
+                    ) : billSummary?.isFreeDelivery ? (
+                      "FREE"
+                    ) : deliveryFee > 0 ? (
+                      `₹${deliveryFee.toFixed(2)}`
+                    ) : (
+                      "Calculated at checkout"
+                    )}
                   </span>
                 </div>
                 <div className={`${styles.summaryRow} ${styles.totalRow}`}>

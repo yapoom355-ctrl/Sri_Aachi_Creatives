@@ -55,6 +55,9 @@ export interface BillSummary {
   deliveryFee: number;
   tax: number;
   grandTotal: number;
+  isFreeDelivery?: boolean;
+  courierName?: string;
+  estimatedDays?: string;
 }
 
 export interface BackendCartItem {
@@ -107,6 +110,10 @@ interface CartContextType {
   cartItems: CartItem[];
   cartCount: number;
   subtotal: number;
+  shippingFee: number;
+  shippingCourier: string;
+  isFreeShipping: boolean;
+  isLoadingShipping: boolean;
 
   addToCart: (productId: string, quantity?: number, itemDetails?: Partial<CartItem>) => Promise<void>;
   updateQuantity: (id: string, size: string, color: string, quantity: number, customInstructions?: string, customImage?: string) => void;
@@ -548,6 +555,60 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     saveCartItems([]);
   }, []);
 
+  // ── Dynamic Backend Delivery Calculation ──────────────────────────────────
+  const [shippingFee, setShippingFee] = useState<number>(0);
+  const [shippingCourier, setShippingCourier] = useState<string>("");
+  const [shippingDays, setShippingDays] = useState<string>("");
+  const [isFreeShipping, setIsFreeShipping] = useState<boolean>(false);
+  const [isLoadingShipping, setIsLoadingShipping] = useState<boolean>(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (cartItems.length === 0) {
+      setShippingFee(0);
+      setIsFreeShipping(false);
+      setShippingCourier("");
+      setShippingDays("");
+      return;
+    }
+
+    const activeAddress =
+      addresses.find((a) => a.id === selectedAddressId) ||
+      addresses.find((a) => a.isPrimary) ||
+      addresses[0];
+
+    async function calculateShipping() {
+      setIsLoadingShipping(true);
+      try {
+        const res = await fetch("/api/shipping/calculate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cartItems,
+            deliveryPincode: activeAddress?.pincode || "",
+            paymentMethod: "RAZORPAY",
+          }),
+        });
+        const data = await res.json();
+        if (isMounted && data.success) {
+          setShippingFee(Number(data.deliveryFee) || 0);
+          setIsFreeShipping(Boolean(data.isFreeDelivery));
+          setShippingCourier(data.courierName || "");
+          setShippingDays(data.estimatedDays || "");
+        }
+      } catch (err) {
+        console.warn("CartContext shipping calculate error:", err);
+      } finally {
+        if (isMounted) setIsLoadingShipping(false);
+      }
+    }
+
+    calculateShipping();
+    return () => {
+      isMounted = false;
+    };
+  }, [cartItems, selectedAddressId, addresses]);
+
   // ── Calculated properties ───────────────────────────────────────────────────
   const cartCount = cartItems.reduce((acc, i) => acc + i.quantity, 0);
   const subtotal = cartItems.reduce((acc, i) => acc + i.numericPrice * i.quantity, 0);
@@ -555,6 +616,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const cart: BackendCart = {
     id: "cart-1",
+    deliveryFee: shippingFee,
     items: cartItems.map((item) => ({
       id: item.id,
       quantity: item.quantity,
@@ -569,12 +631,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     billSummary: {
       itemTotal: subtotal,
       discountApplied: discountAmount,
-      deliveryFee: subtotal > 500 || subtotal === 0 ? 0 : 40,
+      deliveryFee: shippingFee,
       tax: 0,
-      grandTotal: Math.max(
-        0,
-        subtotal - discountAmount + (subtotal > 500 || subtotal === 0 ? 0 : 40)
-      ),
+      grandTotal: Math.max(0, subtotal - discountAmount + shippingFee),
+      isFreeDelivery: isFreeShipping,
+      courierName: shippingCourier,
+      estimatedDays: shippingDays,
     },
   };
 
@@ -981,6 +1043,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         cartItems,
         cartCount,
         subtotal,
+        shippingFee,
+        shippingCourier,
+        isFreeShipping,
+        isLoadingShipping,
         addToCart,
         updateQuantity,
         removeFromCart,

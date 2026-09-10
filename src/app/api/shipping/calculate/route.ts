@@ -26,9 +26,7 @@ export async function POST(req: NextRequest) {
         return (
           id === "UHJvZHVjdDoxOA==" ||
           id === "UHJvZHVjdFZhcmlhbnQ6MTc=" ||
-          name.includes("live test product") ||
-          name.includes("test product (₹1)") ||
-          name.includes("₹1")
+          name.includes("live test product")
         );
       });
 

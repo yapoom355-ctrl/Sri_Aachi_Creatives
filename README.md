@@ -45,3 +45,6 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
   - **Dynamic Rates**: Real-time shipping fee calculation based on pickup and customer delivery pincodes.
 - **Address Management**: Full CRUD with instant pre-filling and database sync via Saleor GraphQL.
 
+---
+*Last Updated: Sri Aachi Creatives Production Release - All features integrated.*
+

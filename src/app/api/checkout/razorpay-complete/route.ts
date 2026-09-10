@@ -191,6 +191,7 @@ export async function POST(req: NextRequest) {
     (async () => {
       try {
         const { createShiprocketOrder, generateShiprocketAWB } = await import('@/lib/shiprocket');
+        const { fulfillSaleorOrder } = await import('@/lib/saleorFulfillment');
         const itemsTotal = lines.reduce((sum: number, l: any) => sum + (Number(l.unitPrice || l.price || 0) * Number(l.quantity || 1)), 0);
         const orderBaseTotal = Number(completedOrder?.total?.gross?.amount || itemsTotal || 1);
         const finalSubTotal = Math.round(orderBaseTotal + (Number(deliveryFee) || 0));

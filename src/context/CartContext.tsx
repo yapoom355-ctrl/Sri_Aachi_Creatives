@@ -916,8 +916,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         user?.email ||
         (user?.phone ? `91${user.phone.replace(/\D/g, "").slice(-10)}@sriaachicreatives.in` : "customer@sriaachicreatives.in");
 
-      let delivery = customDeliveryFee;
-      if (delivery === undefined) {
+      let delivery: number = typeof customDeliveryFee === "number" ? customDeliveryFee : 0;
+      if (customDeliveryFee === undefined) {
         try {
           const shipRes = await fetch("/api/shipping/calculate", {
             method: "POST",
@@ -929,7 +929,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             }),
           });
           const shipData = await shipRes.json();
-          delivery = shipData.deliveryFee ?? 0;
+          delivery = Number(shipData.deliveryFee) || 0;
         } catch {
           delivery = 0;
         }
@@ -978,8 +978,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         throw new Error("No items in cart with valid product variants. Please re-add your items.");
       }
 
-      let delivery = customDeliveryFee;
-      if (delivery === undefined) {
+      let delivery: number = typeof customDeliveryFee === "number" ? customDeliveryFee : 0;
+      if (customDeliveryFee === undefined) {
         try {
           const shipRes = await fetch("/api/shipping/calculate", {
             method: "POST",
@@ -991,7 +991,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             }),
           });
           const shipData = await shipRes.json();
-          delivery = shipData.deliveryFee ?? 0;
+          delivery = Number(shipData.deliveryFee) || 0;
         } catch {
           delivery = 0;
         }

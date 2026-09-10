@@ -19,6 +19,7 @@ export default function ShippingAddressesPage() {
     setAddressAsDefault,
     isLoggedIn,
     setLoginModalOpen,
+    user,
   } = useCart();
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -33,6 +34,16 @@ export default function ShippingAddressesPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isPrimary, setIsPrimary] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (!editingAddress && user?.phone) {
+      const cleanPhone = (user.phone || "").replace(/\D/g, "").slice(-10);
+      setPhoneNumber((prev) => prev || cleanPhone);
+    }
+    if (!editingAddress && user?.name && user.name !== "User") {
+      setCustomerName((prev) => prev || user.name);
+    }
+  }, [user, editingAddress]);
 
   const handleStartEdit = (addr: BackendAddress) => {
     setEditingAddress(addr);
@@ -257,10 +268,10 @@ export default function ShippingAddressesPage() {
               <form onSubmit={handleSaveAddress} className={styles.addressForm}>
 
                 <div className={styles.inputGroup}>
-                  <label className={styles.inputLabel}>Receiver Name *</label>
+                  <label className={styles.inputLabel}>Name *</label>
                   <input
                     type="text"
-                    placeholder="e.g. John Doe"
+                    placeholder="e.g. Name"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     className={styles.textInput}

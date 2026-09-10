@@ -12,7 +12,7 @@ interface AddressModalProps {
 }
 
 export default function AddressModal({ isOpen, onClose, addressToEdit }: AddressModalProps) {
-  const { addAddress, updateAddress, selectAddress } = useCart();
+  const { addAddress, updateAddress, selectAddress, user } = useCart();
 
   const [customerName, setCustomerName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -36,8 +36,9 @@ export default function AddressModal({ isOpen, onClose, addressToEdit }: Address
       setPincode(addressToEdit.pincode || "");
       setIsPrimary(!!addressToEdit.isPrimary);
     } else {
-      setCustomerName("");
-      setPhoneNumber("");
+      setCustomerName(user?.name && user.name !== "User" ? user.name : "");
+      const cleanPhone = (user?.phone || "").replace(/\D/g, "").slice(-10);
+      setPhoneNumber(cleanPhone);
       setAddressLine1("");
       setAddressLine2("");
       setDistrict("");
@@ -46,7 +47,7 @@ export default function AddressModal({ isOpen, onClose, addressToEdit }: Address
       setIsPrimary(false);
     }
     setError("");
-  }, [addressToEdit, isOpen]);
+  }, [addressToEdit, isOpen, user]);
 
   if (!isOpen) return null;
 
@@ -133,10 +134,10 @@ export default function AddressModal({ isOpen, onClose, addressToEdit }: Address
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.row}>
             <div className={styles.field}>
-              <label className={styles.label}>Full Name / Label *</label>
+              <label className={styles.label}>Name *</label>
               <input
                 type="text"
-                placeholder="e.g. User or riyaa"
+                placeholder="e.g. Name"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 className={styles.input}
